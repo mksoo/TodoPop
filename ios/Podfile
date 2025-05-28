@@ -16,9 +16,23 @@ end
 
 target 'TodoPop' do
   config = use_native_modules!
+  use_frameworks! :linkage => :static
+  $RNFirebaseAsStaticFramework = true
+
+  # Flags change depending on the env values.
+  # flags = get_default_flags()
 
   use_react_native!(
     :path => config[:reactNativePath],
+    # Hermes is now enabled by default. Disable by setting this flag to false.
+    :hermes_enabled => true,
+    # :fabric_enabled => flags[:fabric_enabled], 
+    # TODO: 문제 생기면 위에 주석 풀기
+    # Enables Flipper.
+    #
+    # Note that if you have use_frameworks! enabled, Flipper will not work and
+    # you should disable the next line.
+    # :flipper_configuration => flipper_config,
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
