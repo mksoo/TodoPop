@@ -1,34 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, FlatList, Button, TextInput, StyleSheet, TouchableOpacity, Switch } from 'react-native';
 import { Todo } from '../types/todo.types';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
-import { useTodoStore } from '../stores/todoStore';
+import { useGetTodos, useAddTodo, useUpdateTodo, useDeleteTodo } from '../features/todos/hooks/useTodos';
 
 interface TodoListScreenProps {
   navigation: NavigationProp<ParamListBase>;
 }
 
 const TodoListScreen: React.FC<TodoListScreenProps> = ({ navigation }) => {
-  const {
-    todos,
-    isLoading,
-    error,
-    fetchTodos,
-    handleAddTodo,
-    handleDeleteTodo,
-    toggleComplete,
-  } = useTodoStore();
   const [newTodoTitle, setNewTodoTitle] = useState('');
 
-  useEffect(() => {
-    fetchTodos();
-  }, [fetchTodos]);
+  const { data: todos, isLoading, isError, error } = useGetTodos();
+  const addTodoMutation = useAddTodo();
+  const updateTodoMutation = useUpdateTodo();
+  const deleteTodoMutation = useDeleteTodo();
+
+  const handleAdd = () => {
+    if (!newTodoTitle.trim()) return;
+    addTodoMutation.mutate({ title: newTodoTitle, completed: false, failed: false });
+    setNewTodoTitle('');
+  };
+
+  const handleToggleComplete = (id: string, completed: boolean) => {
+    updateTodoMutation.mutate({ id, updates: { completed } });
+  };
+
+  const handleDelete = (id: string) => {
+    deleteTodoMutation.mutate(id);
+  };
 
   const renderItem = ({ item }: { item: Todo }) => (
     <View style={styles.todoItemContainer}>
       <Switch
         value={item.completed}
-        onValueChange={(value) => toggleComplete(item.id, value)}
+        onValueChange={(value) => handleToggleComplete(item.id, value)}
       />
       <TouchableOpacity 
         style={styles.todoTextContainer} 
@@ -37,9 +43,12 @@ const TodoListScreen: React.FC<TodoListScreenProps> = ({ navigation }) => {
           {item.title}
         </Text>
       </TouchableOpacity>
-      <Button title="삭제" onPress={() => handleDeleteTodo(item.id)} color="red" />
+      <Button title="삭제" onPress={() => handleDelete(item.id)} color="red" />
     </View>
   );
+
+  if (isLoading) return <Text>로딩 중...</Text>;
+  if (isError || error) return <Text style={styles.errorText}>오류: {error?.message || '알 수 없는 오류'}</Text>;
 
   return (
     <View style={styles.container}>
@@ -50,16 +59,12 @@ const TodoListScreen: React.FC<TodoListScreenProps> = ({ navigation }) => {
           placeholder="새로운 할 일 입력..."
           value={newTodoTitle}
           onChangeText={setNewTodoTitle}
+          onSubmitEditing={handleAdd}
         />
-        <Button title="추가" onPress={() => {
-          handleAddTodo(newTodoTitle);
-          setNewTodoTitle('');
-        }} />
+        <Button title="추가" onPress={handleAdd} />
       </View>
-      {isLoading && <Text>로딩 중...</Text>}
-      {error && <Text style={styles.errorText}>오류: {error}</Text>}
       <FlatList
-        data={todos}
+        data={todos || []}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
       />
