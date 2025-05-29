@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, FlatList, Button, TextInput, StyleSheet, TouchableOpacity, Switch } from 'react-native';
 import { Todo } from '../types/todo.types';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
-import { useGetTodos, useAddTodo, useUpdateTodo, useDeleteTodo } from '../features/todos/hooks/useTodos';
+import { useGetTodos, useAddTodo, useUpdateTodo, useDeleteTodo } from '../hooks/useTodos';
 
 interface TodoListScreenProps {
   navigation: NavigationProp<ParamListBase>;
