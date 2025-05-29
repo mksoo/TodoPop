@@ -1,0 +1,51 @@
+import firestore from '@react-native-firebase/firestore';
+import { todosCollection } from '../lib/firebase'; // 경로 수정
+import { Todo } from '../types/todo.types'; // 경로 수정
+
+// Todo 항목을 추가하는 함수
+export const addTodo = async (todo: Omit<Todo, 'id' | 'createdAt'>): Promise<string> => {
+  try {
+    const docRef = await todosCollection.add({
+      ...todo,
+      createdAt: firestore.FieldValue.serverTimestamp(),
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error("Error adding document: ", error);
+    throw error;
+  }
+};
+
+// 모든 Todo 항목 가져오기
+export const getTodos = async (): Promise<Todo[]> => {
+  try {
+    const snapshot = await todosCollection.orderBy('createdAt', 'desc').get();
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    } as Todo));
+  } catch (error) {
+    console.error("Error getting documents: ", error);
+    throw error;
+  }
+};
+
+// Todo 항목 업데이트
+export const updateTodo = async (id: string, updates: Partial<Omit<Todo, 'id' | 'createdAt'>>): Promise<void> => {
+  try {
+    await todosCollection.doc(id).update(updates);
+  } catch (error) {
+    console.error("Error updating document: ", error);
+    throw error;
+  }
+};
+
+// Todo 항목 삭제
+export const deleteTodo = async (id: string): Promise<void> => {
+  try {
+    await todosCollection.doc(id).delete();
+  } catch (error) {
+    console.error("Error deleting document: ", error);
+    throw error;
+  }
+}; 
