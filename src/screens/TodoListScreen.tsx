@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, Button, TextInput, StyleSheet, TouchableOpacity, Switch } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, FlatList, Button, TextInput, StyleSheet } from 'react-native';
 import { Todo } from '../types/todo.types';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
-import { useGetTodos, useAddTodo, useUpdateTodo, useDeleteTodo } from '../hooks/useTodos';
+import { useGetTodos } from '../hooks/useTodosQueries';
+import { useAddTodo, useToggleTodoComplete, useDeleteTodo } from '../hooks/useTodosMutations';
+import TodoItem from '../components/TodoItem';
 
 interface TodoListScreenProps {
   navigation: NavigationProp<ParamListBase>;
@@ -13,39 +15,30 @@ const TodoListScreen: React.FC<TodoListScreenProps> = ({ navigation }) => {
 
   const { data: todos, isLoading, isError, error } = useGetTodos();
   const addTodoMutation = useAddTodo();
-  const updateTodoMutation = useUpdateTodo();
+  const toggleTodoCompleteMutation = useToggleTodoComplete();
   const deleteTodoMutation = useDeleteTodo();
 
-  const handleAdd = () => {
+  const handleAdd = useCallback(() => {
     if (!newTodoTitle.trim()) return;
     addTodoMutation.mutate({ title: newTodoTitle, completed: false, failed: false });
     setNewTodoTitle('');
-  };
+  }, [newTodoTitle, addTodoMutation]);
 
-  const handleToggleComplete = (id: string, completed: boolean) => {
-    updateTodoMutation.mutate({ id, updates: { completed } });
-  };
+  const handleToggleComplete = useCallback((id: string, completed: boolean) => {
+    toggleTodoCompleteMutation.mutate({ id, completed });
+  }, [toggleTodoCompleteMutation]);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = useCallback((id: string) => {
     deleteTodoMutation.mutate(id);
-  };
+  }, [deleteTodoMutation]);
 
-  const renderItem = ({ item }: { item: Todo }) => (
-    <View style={styles.todoItemContainer}>
-      <Switch
-        value={item.completed}
-        onValueChange={(value) => handleToggleComplete(item.id, value)}
-      />
-      <TouchableOpacity 
-        style={styles.todoTextContainer} 
-      >
-        <Text style={[styles.todoTitle, item.completed && styles.completedTodo]}>
-          {item.title}
-        </Text>
-      </TouchableOpacity>
-      <Button title="삭제" onPress={() => handleDelete(item.id)} color="red" />
-    </View>
-  );
+  const renderItem = useCallback(({ item }: { item: Todo }) => (
+    <TodoItem 
+      item={item}
+      onToggleComplete={handleToggleComplete} 
+      onDelete={handleDelete} 
+    />
+  ), [handleToggleComplete, handleDelete]);
 
   if (isLoading) return <Text>로딩 중...</Text>;
   if (isError || error) return <Text style={styles.errorText}>오류: {error?.message || '알 수 없는 오류'}</Text>;
@@ -96,30 +89,6 @@ const styles = StyleSheet.create({
     marginRight: 10,
     borderRadius: 5,
     backgroundColor: 'white',
-  },
-  todoItemContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    marginBottom: 10,
-    backgroundColor: 'white',
-    borderRadius: 5,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1,
-  },
-  todoTextContainer: {
-    flex: 1,
-    marginLeft: 10,
-  },
-  todoTitle: {
-    fontSize: 18,
-  },
-  completedTodo: {
-    textDecorationLine: 'line-through',
-    color: '#aaa',
   },
   errorText: {
     color: 'red',
