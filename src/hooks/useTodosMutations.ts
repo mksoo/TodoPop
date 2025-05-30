@@ -3,7 +3,7 @@ import { addTodo, updateTodo, getTodoById, deleteTodo } from '../api/todoApi';
 import { Todo, RepeatSettings } from '../types/todo.types';
 import { QueryKeyGenerator } from '../lib/QueryKeyGenerator';
 import { calculateNextOccurrence } from '../utils/repeatUtils';
-import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import firestore, { FirebaseFirestoreTypes, Timestamp } from '@react-native-firebase/firestore';
 
 /**
  * 새로운 할 일(Todo)을 추가하는 React Query 뮤테이션 훅입니다.
@@ -59,7 +59,8 @@ export const useUpdateTodoStatus = () => {
 
       // 2. 할 일이 'COMPLETED' 상태로 변경되고 반복 설정이 있는 경우 다음 반복 처리
       if (status === 'COMPLETED' && todoToUpdate.repeatSettings) {
-        const now = firestore.Timestamp.now();
+        console.log('Timestamp in useUpdateTodoStatus before now():', Timestamp);
+        const now = Timestamp.now();
         // 현재 완료되는 할 일의 repeatSettings 업데이트 (lastCompleted 설정)
         updatesForCurrentTodo.repeatSettings = {
           ...todoToUpdate.repeatSettings,
@@ -111,7 +112,12 @@ export const useUpdateTodoStatus = () => {
       }
 
       if (Object.keys(changedUpdates).length > 0) {
-        await updateTodo({ id, updates: changedUpdates });
+        const updatesToSend = Object.fromEntries(
+          Object.entries(changedUpdates).filter(([_, v]) => v !== undefined)
+        );
+        if (Object.keys(updatesToSend).length > 0) {
+          await updateTodo({ id, updates: updatesToSend });
+        }
       }
 
       // 4. 새로운 반복 할 일이 있으면 추가
@@ -173,10 +179,13 @@ export const useUpdateTodoStatus = () => {
 export const useUpdateTodo = () => {
   const queryClient = useQueryClient();
   // 뮤테이션 함수 인자 타입: id와 업데이트할 내용(updates). dueDate는 Timestamp 또는 null 허용.
-  return useMutation<void, Error, { id: string; updates: Partial<Omit<Todo, 'id' | 'createdAt' | 'status'>> & { dueDate?: FirebaseFirestoreTypes.Timestamp | null } }>({ 
+  return useMutation<void, Error, { id: string; updates: Partial<Omit<Todo, 'id' | 'createdAt' | 'status'>> & { dueDate?: Timestamp | null } }>({ 
     mutationFn: async ({ id, updates }) => {
       const currentTodo = await getTodoById({ id });
       if (!currentTodo) throw new Error('Todo not found for update');
+
+      console.log('currentTodo', currentTodo);
+      console.log('updates', updates);
 
       const finalUpdates: Partial<Todo> = { ...updates };
 
@@ -205,9 +214,10 @@ export const useUpdateTodo = () => {
           // 1. 업데이트로 전달된 dueDate (dueDateUpdate)
           // 2. 현재 할 일의 dueDate (currentTodo.dueDate)
           // 3. 둘 다 없으면 현재 시간
+          console.log('Timestamp in useUpdateTodo before now():', Timestamp);
           const referenceDateForCalc = dueDateUpdate !== undefined && dueDateUpdate !== null ? dueDateUpdate :
                                      currentTodo.dueDate ? currentTodo.dueDate :
-                                     firestore.Timestamp.now();
+                                     Timestamp.now();
 
           const newNextOccurrence = calculateNextOccurrence({
             repeatSettings: effectiveRepeatSettings, // 적용할 반복 설정
@@ -232,7 +242,12 @@ export const useUpdateTodo = () => {
 
       // 실제로 변경된 필드가 있을 경우에만 Firestore 업데이트 실행
       if (Object.keys(finalUpdates).length > 0) {
-        await updateTodo({ id, updates: finalUpdates });
+        const updatesToSend = Object.fromEntries(
+          Object.entries(finalUpdates).filter(([_, v]) => v !== undefined)
+        );
+        if (Object.keys(updatesToSend).length > 0) {
+          await updateTodo({ id, updates: updatesToSend });
+        }
       }
     },
     onSuccess: (data, variables) => {

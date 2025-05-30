@@ -6,7 +6,7 @@ import {
   ShowableTodo as TypeShowableTodo, // Imported from type definitions, aliased to avoid conflict
   RepeatSettings // RepeatSettings를 직접 가져와서 사용
 } from '../types/todo.types';
-import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import { FirebaseFirestoreTypes, Timestamp } from '@react-native-firebase/firestore';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
@@ -28,8 +28,20 @@ dayjs.extend(isSameOrAfter); // isSameOrAfter 플러그인 사용 설정
  */
 export const calculateNextOccurrence = (
   args: CalculableTodoForNext
-): FirebaseFirestoreTypes.Timestamp | null => {
+): Timestamp | null => {
+  console.log('Timestamp in calculateNextOccurrence:', Timestamp);
   const { repeatSettings, nextOccurrence, referenceDate } = args;
+
+  console.log('[Debug] raw referenceDate:', referenceDate); // referenceDate 원시 값 로깅
+  if (referenceDate) {
+    console.log('[Debug] typeof referenceDate:', typeof referenceDate);
+    console.log('[Debug] referenceDate instanceof Timestamp:', referenceDate instanceof Timestamp);
+    if (typeof referenceDate.toDate === 'function') {
+      console.log('[Debug] referenceDate.toDate exists');
+    } else {
+      console.log('[Debug] referenceDate.toDate DOES NOT exist or not a function');
+    }
+  }
 
   if (!repeatSettings) return null; // 반복 설정이 없으면 계산 불가
 
@@ -51,8 +63,24 @@ export const calculateNextOccurrence = (
   //    (정확히는 nextOccurrence에서 interval만큼 이전 시점으로 돌아가 기준일을 설정합니다.)
   // 4. 모두 없으면 오늘을 기준으로 계산합니다 (주로 새로운 반복 항목의 첫 발생일 계산 시).
   if (referenceDate) {
-    baseDateDayjs = dayjs(referenceDate instanceof FirebaseFirestoreTypes.Timestamp ? referenceDate.toDate() : referenceDate);
+    let dateInputForDayjs: Date | string | number | undefined | null; // dayjs가 받을 수 있는 타입으로 명시
+    if (referenceDate instanceof Timestamp) {
+      console.log('[Debug] referenceDate is instanceof Timestamp. Calling toDate().');
+      dateInputForDayjs = referenceDate.toDate();
+    } else {
+      console.log('[Debug] referenceDate is NOT instanceof Timestamp. Using as is (hoping it is Date, string, or number).');
+      // Firestore Timestamp가 아닌 경우, JS Date, 문자열, 숫자, 또는 null/undefined일 수 있다고 가정합니다.
+      // CalculableTodoForNext 타입 정의에서 referenceDate는 Timestamp 타입이므로, 이 else 블록은 이론상 도달하지 않아야 합니다.
+      // 하지만 방어적으로 코드를 작성한다면, 여기서 referenceDate의 타입을 더 구체적으로 확인하고 변환해야 합니다.
+      // 현재 CalculableTodoForNext.referenceDate는 Timestamp 타입이므로 이 else는 실행되지 않을 것입니다.
+      // 만약 다른 타입이 올 수 있도록 CalculableTodoForNext가 변경된다면 이 부분을 수정해야 합니다.
+      dateInputForDayjs = referenceDate as any; // 일단 any로 두어 기존 로직 유지, 실제로는 타입 체크 필요
+    }
+    console.log('[Debug] dateInputForDayjs:', dateInputForDayjs);
+    baseDateDayjs = dayjs(dateInputForDayjs);
+    console.log('[Debug] baseDateDayjs (after dayjs conversion):', baseDateDayjs);
   } else if (lastCompleted) {
+    // lastCompleted 로깅 추가 고려 (필요시)
     baseDateDayjs = dayjs(lastCompleted.toDate());
   } else if (nextOccurrence) {
     let baseInterval = interval > 0 ? interval : 1;
@@ -167,7 +195,7 @@ export const calculateNextOccurrence = (
   }
 
   // 최종 계산된 Dayjs 객체를 Firestore Timestamp로 변환하여 반환
-  return firestore.Timestamp.fromDate(nextDateDayjs.toDate());
+  return Timestamp.fromDate(nextDateDayjs.toDate());
 };
 
 /**
