@@ -18,6 +18,8 @@ const TodoItem: React.FC<TodoItemProps> = React.memo(({
 }) => {
   const { data: item } = useGetTodo(itemId);
 
+  console.log('item', item);
+
   if (!item) return null;
 
   return (

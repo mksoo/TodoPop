@@ -42,7 +42,7 @@ export const getTodoById = async (args: { id: string }): Promise<Todo> => {
     throw new Error('Todo not found');
   }
 
-  return plainToTodo(data);
+  return plainToTodo({id: doc.id, ...data});
 };
 
 // Todo 항목 업데이트
