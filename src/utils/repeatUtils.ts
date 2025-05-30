@@ -1,156 +1,192 @@
-import { Todo, RepeatSettings, RepeatFrequency } from '../types/todo.types';
+import {
+  // Todo, // Not directly used as CalculableTodoForNext is more specific
+  // RepeatSettings, // Part of CalculableTodoForNext
+  // RepeatFrequency, // Part of RepeatSettings
+  CalculableTodoForNext, // Imported from type definitions
+  ShowableTodo as TypeShowableTodo, // Imported from type definitions, aliased to avoid conflict
+  RepeatSettings // RepeatSettings를 직접 가져와서 사용
+} from '../types/todo.types';
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
-import dayjs from 'dayjs'; // dayjs 임포트
-import customParseFormat from 'dayjs/plugin/customParseFormat'; // 필요한 플러그인 임포트 (선택적)
-import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'; // isSameOrBefore 플러그인 임포트
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'; // isSameOrAfter 플러그인 import
+
 dayjs.extend(customParseFormat);
-dayjs.extend(isSameOrBefore); // isSameOrBefore 플러그인 사용 설정
+dayjs.extend(isSameOrBefore);
+dayjs.extend(isSameOrAfter); // isSameOrAfter 플러그인 사용 설정
 
-// calculateNextOccurrence 함수를 위한 타입 정의
-interface CalculableTodo {
-  repeatSettings?: RepeatSettings;
-  nextOccurrence?: FirebaseFirestoreTypes.Timestamp | null;
-  lastCompleted?: FirebaseFirestoreTypes.Timestamp; // Todo 타입에 lastCompleted가 정의되어 있어야 함
-}
-
-interface CalculableTodoForNext {
-  repeatSettings: RepeatSettings; // 이 함수 호출 시 repeatSettings는 필수라고 가정
-  nextOccurrence?: FirebaseFirestoreTypes.Timestamp | null; 
-  lastCompleted?: FirebaseFirestoreTypes.Timestamp;
-  // 새로운 반복의 첫 발생일을 찾기 위한 기준 날짜 (옵셔널)
-  // 이 값이 없으면, lastCompleted나 nextOccurrence를 사용하고, 둘 다 없으면 오늘을 기준으로 함.
-  referenceDate?: FirebaseFirestoreTypes.Timestamp | Date | string;
-}
-
+/**
+ * 할 일의 다음 반복 발생일을 계산합니다.
+ *
+ * @param args 계산에 필요한 인자 객체. src/types/todo.types.ts의 CalculableTodoForNext 타입을 따릅니다.
+ * @param args.repeatSettings 필수: 할 일의 반복 설정 객체.
+ * @param args.nextOccurrence 옵셔널: 현재 설정된 다음 발생일. `referenceDate`나 `lastCompleted`가 없을 때 기준일 계산에 사용됩니다.
+ * @param args.referenceDate 옵셔널: 새로운 반복 주기의 시작점을 명시적으로 지정할 때 사용 (예: 할 일 수정 시 마감일 변경).
+ *                              이 값이 있으면 `lastCompleted` (repeatSettings 내)나 `nextOccurrence`보다 우선하여 기준 날짜로 사용됩니다.
+ * @returns 계산된 다음 발생일의 Timestamp 객체. 반복이 종료되었거나 계산할 수 없으면 null을 반환합니다.
+ */
 export const calculateNextOccurrence = (
   args: CalculableTodoForNext
 ): FirebaseFirestoreTypes.Timestamp | null => {
-  const { repeatSettings, nextOccurrence, lastCompleted, referenceDate } = args;
+  const { repeatSettings, nextOccurrence, referenceDate } = args;
 
-  if (!repeatSettings) return null; // 방어 코드
+  if (!repeatSettings) return null; // 반복 설정이 없으면 계산 불가
 
-  const { frequency, interval = 1, daysOfWeek, daysOfMonth, endDate } = repeatSettings;
+  const {
+    frequency,
+    interval = 1, // 기본 간격은 1
+    daysOfWeek,
+    daysOfMonth,
+    endDate,
+    lastCompleted // repeatSettings에서 lastCompleted 가져옴
+  } = repeatSettings;
 
   let baseDateDayjs: dayjs.Dayjs;
 
+  // 기준 날짜(baseDateDayjs) 결정 로직:
+  // 1. referenceDate가 있으면 최우선으로 사용합니다.
+  // 2. referenceDate가 없고 lastCompleted가 있으면 그것을 기준으로 합니다.
+  // 3. 둘 다 없고 nextOccurrence가 있으면, 해당 날짜를 이전 주기의 완료일처럼 간주하여 다음을 계산합니다.
+  //    (정확히는 nextOccurrence에서 interval만큼 이전 시점으로 돌아가 기준일을 설정합니다.)
+  // 4. 모두 없으면 오늘을 기준으로 계산합니다 (주로 새로운 반복 항목의 첫 발생일 계산 시).
   if (referenceDate) {
     baseDateDayjs = dayjs(referenceDate instanceof FirebaseFirestoreTypes.Timestamp ? referenceDate.toDate() : referenceDate);
   } else if (lastCompleted) {
     baseDateDayjs = dayjs(lastCompleted.toDate());
   } else if (nextOccurrence) {
-    // nextOccurrence는 이미 다음 예정일이므로, 이를 기준으로 다음 것을 찾으려면 interval만큼 빼야 함.
-    // 또는, 이 nextOccurrence가 "시작점"으로 간주되어야 한다면 그대로 사용.
-    // 여기서는 lastCompleted가 없을 때 nextOccurrence를 '현재 주기 완료일'처럼 간주하여 다음을 찾도록 함.
-    baseDateDayjs = dayjs(nextOccurrence.toDate()).subtract(interval > 0 ? interval : 1, frequency === 'weekly' ? 'week' : frequency === 'monthly' ? 'month' : 'day');
+    let baseInterval = interval > 0 ? interval : 1;
+    let unit: 'day' | 'week' | 'month' = 'day';
+    if (frequency === 'weekly') unit = 'week';
+    else if (frequency === 'monthly') unit = 'month';
+    baseDateDayjs = dayjs(nextOccurrence.toDate()).subtract(baseInterval, unit);
   } else {
     baseDateDayjs = dayjs(); // 오늘
   }
 
-  if (!baseDateDayjs.isValid()) return null; // 유효하지 않은 날짜면 null 반환
+  if (!baseDateDayjs.isValid()) return null; // 유효하지 않은 기준 날짜면 계산 불가
 
-  let nextDateDayjs = baseDateDayjs.clone(); // 불변성을 위해 clone 사용
+  let nextDateDayjs = baseDateDayjs.clone(); // 원본 변경 방지를 위해 복제하여 사용
 
+  // 반복 빈도(frequency)에 따라 다음 날짜(nextDateDayjs) 계산
   switch (frequency) {
     case 'daily':
       nextDateDayjs = nextDateDayjs.add(interval, 'day');
       break;
     case 'weekly':
       if (daysOfWeek && daysOfWeek.length > 0) {
-        // daysOfWeek는 0(일요일) ~ 6(토요일)
+        // 특정 요일(daysOfWeek)이 지정된 주간 반복
         let tempDate = baseDateDayjs.clone();
-        // 현재 주 또는 다음 interval 주에서 가장 빠른 요일 찾기
-        // 기준일이 이미 해당 요일인 경우 다음 반복으로 넘어가도록 +1일 해서 시작
-        if(!referenceDate) tempDate = tempDate.add(1, 'day'); 
+        // referenceDate가 없을 때 (lastCompleted나 오늘 기준)는 기준일 다음날부터 탐색하여 현재일이 반복 요일이라도 다음 주기로 넘어가도록 함.
+        if (!referenceDate) tempDate = tempDate.add(1, 'day');
 
-        outerLoop: while (true) {
-          for (const day of daysOfWeek.sort((a, b) => a - b)) {
+        outerLoopWeekly: while (true) {
+          // 요일 오름차순 정렬 (0=일요일, ..., 6=토요일)
+          for (const day of [...daysOfWeek].sort((a, b) => a - b)) {
             if (tempDate.day() <= day) {
               nextDateDayjs = tempDate.day(day);
-              if (nextDateDayjs.isAfter(baseDateDayjs) || nextDateDayjs.isSame(baseDateDayjs, 'day')) {
-                 // nextDateDayjs가 baseDateDayjs보다 이후인지 확인하여 무한루프 방지 및 정확한 다음 날짜 선택
-                if(referenceDate && nextDateDayjs.isBefore(baseDateDayjs, 'day')){
-                    // referenceDate가 있고, 계산된 날짜가 referenceDate보다 이전이면 다음 주로 넘김
+              // 계산된 날짜가 기준일(baseDateDayjs 또는 referenceDate) 이후인지 확인
+              if (nextDateDayjs.isAfter(baseDateDayjs) ||
+                 (referenceDate && nextDateDayjs.isSame(baseDateDayjs, 'day')) ||
+                 (!referenceDate && nextDateDayjs.isSameOrAfter(baseDateDayjs, 'day'))) {
+                if (referenceDate && nextDateDayjs.isBefore(baseDateDayjs, 'day')) {
+                  // 이 경우는 거의 발생하지 않아야 함 (tempDate.day(day) 로직 때문)
                 } else {
-                    break outerLoop;
+                  break outerLoopWeekly; // 적절한 다음 날짜 찾음
                 }
               }
             }
           }
-          tempDate = tempDate.add(1, 'week').startOf('week'); // 다음 주로 이동하여 해당 주의 첫날부터 다시 탐색
-        }
-         // interval 적용 (이미 첫번째 주기는 위에서 찾았으므로 interval-1 만큼만 더함, 단 interval>1 일때)
-        if(interval > 1 && !(referenceDate && nextDateDayjs.isSame(baseDateDayjs,'week'))){
-            nextDateDayjs = nextDateDayjs.add((interval -1) * 7, 'day');
-        } else if (interval > 1 && referenceDate && nextDateDayjs.isSame(baseDateDayjs,'week') && !daysOfWeek.includes(baseDateDayjs.day())) {
-            // referenceDate가 있는 주에 다음 반복 요일이 없을 경우, 다음 interval 주기 계산
-            nextDateDayjs = nextDateDayjs.add(interval * 7, 'day');
-        } else if (interval > 1 && referenceDate && nextDateDayjs.isSame(baseDateDayjs,'week') && daysOfWeek.includes(baseDateDayjs.day()) && nextDateDayjs.isSame(baseDateDayjs, 'day')){
-            // referenceDate 자체가 반복 요일인 경우, 다음 interval 주기로 바로 점프
-            nextDateDayjs = nextDateDayjs.add(interval * 7, 'day');
+          // 현재 주에서 적절한 요일을 찾지 못했으면, 다음 주의 첫날로 이동하여 다시 탐색
+          tempDate = tempDate.add(1, 'week').startOf('week');
         }
 
+        // 주간 반복 간격(interval) 적용 (interval > 1 경우)
+        // 이 부분은 다음 발생 요일을 찾은 후, 해당 발생이 (interval-1) 주기만큼 뒤로 가야 함을 의미.
+        // 단, referenceDate가 다음 발생일과 동일한 날짜이고 해당 요일이 반복 요일이면 interval 만큼 더해야 함.
+        if (interval > 1) {
+          const initialNextDate = nextDateDayjs.clone();
+          if (referenceDate && initialNextDate.isSame(baseDateDayjs, 'day') && daysOfWeek.includes(baseDateDayjs.day())) {
+            nextDateDayjs = initialNextDate.add(interval * 7, 'day');
+          } else {
+            nextDateDayjs = initialNextDate.add(Math.max(0, interval - 1) * 7, 'day');
+          }
+        }
       } else {
-        nextDateDayjs = nextDateDayjs.add(interval * 7, 'day'); // daysOfWeek 없으면 단순 주간 반복
+        // 특정 요일 지정 없이, 단순 N주마다 반복
+        nextDateDayjs = nextDateDayjs.add(interval * 7, 'day');
       }
       break;
     case 'monthly':
-      // 월간 반복 로직 (dayjs 사용)
       if (daysOfMonth && daysOfMonth.length > 0) {
+        // 특정 날짜(daysOfMonth)가 지정된 월간 반복
         let tempDate = baseDateDayjs.clone();
-        if(!referenceDate) tempDate = tempDate.add(1, 'day'); // 기준일 포함하지 않기 위해
+        if (!referenceDate) tempDate = tempDate.add(1, 'day'); // 기준일 다음날부터 탐색
 
         outerLoopMonthly: while(true){
-            for(const day of daysOfMonth.sort((a,b) => a-b)){
-                if(tempDate.date() <= day){
-                    nextDateDayjs = tempDate.date(day);
-                     if (nextDateDayjs.isAfter(baseDateDayjs) || nextDateDayjs.isSame(baseDateDayjs, 'day')) {
-                        if(referenceDate && nextDateDayjs.isBefore(baseDateDayjs, 'day')){
-                           // continue; // referenceDate보다 이전이면 다음 반복일 찾기
-                        } else {
-                            break outerLoopMonthly;
-                        }
-                    }
+          for(const day of [...daysOfMonth].sort((a,b) => a-b)){
+            // 현재 달에 해당 날짜가 유효한지 확인 (예: 2월 30일은 없음)
+            if (tempDate.date() <= day && day <= tempDate.daysInMonth()) {
+              nextDateDayjs = tempDate.date(day);
+              if (nextDateDayjs.isAfter(baseDateDayjs) ||
+                 (referenceDate && nextDateDayjs.isSame(baseDateDayjs, 'day')) ||
+                 (!referenceDate && nextDateDayjs.isSameOrAfter(baseDateDayjs, 'day'))) {
+                if(referenceDate && nextDateDayjs.isBefore(baseDateDayjs, 'day')){
+                  // continue;
+                } else {
+                  break outerLoopMonthly;
                 }
+              }
             }
-            tempDate = tempDate.add(1, 'month').startOf('month');
-        }
-        if(interval > 1 && !(referenceDate && nextDateDayjs.isSame(baseDateDayjs,'month')) ){
-             nextDateDayjs = nextDateDayjs.add(interval -1, 'month');
-        } else if (interval > 1 && referenceDate && nextDateDayjs.isSame(baseDateDayjs,'month') && !daysOfMonth.includes(baseDateDayjs.date())  ){
-            nextDateDayjs = nextDateDayjs.add(interval, 'month');
-        } else if (interval > 1 && referenceDate && nextDateDayjs.isSame(baseDateDayjs,'month') && daysOfMonth.includes(baseDateDayjs.date()) && nextDateDayjs.isSame(baseDateDayjs, 'day')){
-            nextDateDayjs = nextDateDayjs.add(interval, 'month');
+          }
+          tempDate = tempDate.add(1, 'month').startOf('month');
         }
 
+        // 월간 반복 간격(interval) 적용 (주간과 유사한 로직)
+        if (interval > 1) {
+            const initialNextDate = nextDateDayjs.clone();
+            if (referenceDate && initialNextDate.isSame(baseDateDayjs, 'day') && daysOfMonth.includes(baseDateDayjs.date())) {
+                nextDateDayjs = initialNextDate.add(interval, 'month');
+            } else {
+                nextDateDayjs = initialNextDate.add(Math.max(0, interval - 1), 'month');
+            }
+        }
       } else {
+        // 특정 날짜 지정 없이, 단순 N개월마다 반복 (기준일의 날짜(day)를 유지하며 N개월 추가)
         nextDateDayjs = nextDateDayjs.add(interval, 'month');
       }
       break;
-    case 'custom':
-      return null; // 사용자 정의 로직은 아직 미구현
+    case 'custom': // 'custom' 빈도는 현재 미지원
+      // 향후 X일마다 등의 custom frequency를 지원할 경우 여기서 처리합니다.
+      return null;
   }
 
+  // 계산된 다음 발생일(nextDateDayjs)이 반복 종료일(endDate) 이후인지 확인
   if (endDate && nextDateDayjs.isAfter(dayjs(endDate.toDate()))) {
-    return null;
+    return null; // 종료일 이후면 더 이상 반복 없음
   }
 
+  // 최종 계산된 Dayjs 객체를 Firestore Timestamp로 변환하여 반환
   return firestore.Timestamp.fromDate(nextDateDayjs.toDate());
 };
 
-// shouldShowTodo 함수를 위한 타입 정의
-interface ShowableTodo {
-  repeatSettings?: RepeatSettings; // Todo 타입과 일치하도록 옵셔널 유지
-  nextOccurrence?: FirebaseFirestoreTypes.Timestamp | null; // null 허용 추가
-  status: 'ONGOING' | 'COMPLETED' | 'FAILED';
-}
+/**
+ * 주어진 할 일이 현재 목록에 표시되어야 하는지 여부를 결정합니다.
+ *
+ * @param todo 확인할 할 일 객체. `TypeShowableTodo` 인터페이스와 status, repeatSettings를 포함할 수 있는 객체를 따릅니다.
+ * @returns 할 일이 표시되어야 하면 true, 그렇지 않으면 false.
+ */
+export const shouldShowTodo = (todo: TypeShowableTodo & { repeatSettings?: RepeatSettings, status?: string }): boolean => {
+  // nextOccurrence가 없는 경우:
+  //   - 반복 설정(repeatSettings)이 없으면 일반 할 일이므로 항상 표시 (또는 마감일 기준 다른 로직 적용 가능).
+  //   - 반복 설정이 있는데 nextOccurrence가 없으면 반복이 종료된 것으로 간주하여 숨김.
+  if (!todo.nextOccurrence) {
+    if(!todo.repeatSettings) return true; // 반복 없는 일반 Todo는 일단 표시
+    return false; // 반복 설정이 있는데 nextOccurrence 없으면 (종료된 것으로 간주) 숨김.
+  }
 
-export const shouldShowTodo = (todo: ShowableTodo): boolean => {
-  // 반복되지 않는 할 일 (repeatSettings가 없는 경우)은 항상 표시
-  if (!todo.repeatSettings) return true;
-  // 완료된 반복 할 일은 다음 발생일이 없으면 숨김
-  if (todo.status === 'COMPLETED' && !todo.nextOccurrence) return false; 
-  const now = dayjs(); // 현재 시간 (dayjs 사용)
-  const nextOccurrenceDate = todo.nextOccurrence ? dayjs(todo.nextOccurrence.toDate()) : null;
-  if (!nextOccurrenceDate) return true; 
-  return nextOccurrenceDate.startOf('day').isSameOrBefore(now.startOf('day')); // 날짜 단위로 비교
+  // nextOccurrence가 오늘이거나 과거인 경우 표시 (시간은 무시하고 날짜만 비교)
+  const now = dayjs();
+  const nextOccurrenceDate = dayjs(todo.nextOccurrence.toDate());
+  return nextOccurrenceDate.startOf('day').isSameOrBefore(now.startOf('day'));
 }; 
