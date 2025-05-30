@@ -14,6 +14,7 @@ const TodoListScreen: React.FC<TodoListScreenProps> = ({ navigation }) => {
   const [newTodoTitle, setNewTodoTitle] = useState('');
 
   const { data: todos, isLoading, isError, error } = useGetTodos();
+  console.log('todos', todos);
   const addTodoMutation = useAddTodo();
   const toggleTodoCompleteMutation = useToggleTodoComplete();
   const deleteTodoMutation = useDeleteTodo();
@@ -29,12 +30,12 @@ const TodoListScreen: React.FC<TodoListScreenProps> = ({ navigation }) => {
   }, [toggleTodoCompleteMutation]);
 
   const handleDelete = useCallback((id: string) => {
-    deleteTodoMutation.mutate(id);
+    deleteTodoMutation.mutate({id});
   }, [deleteTodoMutation]);
-
+  
   const renderItem = useCallback(({ item }: { item: Todo }) => (
     <TodoItem 
-      item={item}
+      itemId={item.id}
       onToggleComplete={handleToggleComplete} 
       onDelete={handleDelete} 
     />
