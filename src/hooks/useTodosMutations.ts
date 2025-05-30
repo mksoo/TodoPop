@@ -6,8 +6,8 @@ import { QueryKeyGenerator } from '../lib/QueryKeyGenerator';
 // Todo를 추가하는 훅 (Mutation)
 export const useAddTodo = () => {
   const queryClient = useQueryClient();
-  return useMutation<string, Error, Omit<Todo, 'id' | 'createdAt'>>({
-    mutationFn: addTodo,
+  return useMutation<string, Error, { todo: Omit<Todo, 'id' | 'createdAt'> }>({
+    mutationFn: ({ todo }) => addTodo({ todo }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QueryKeyGenerator.allTodos() });
     },
@@ -18,7 +18,7 @@ export const useAddTodo = () => {
 export const useToggleTodoComplete = () => {
   const queryClient = useQueryClient();
   return useMutation<void, Error, { id: string; completed: boolean }, { previousTodos?: Todo[] }>({
-    mutationFn: ({ id, completed }) => updateTodo(id, { completed }),
+    mutationFn: ({ id, completed }) => updateTodo({ id, updates: { completed } }),
     onMutate: async (variables) => {
       await queryClient.cancelQueries({ queryKey: QueryKeyGenerator.allTodos() });
       const previousTodos = queryClient.getQueryData<Todo[]>(QueryKeyGenerator.allTodos());
@@ -45,7 +45,7 @@ export const useToggleTodoComplete = () => {
 export const useUpdateTodo = () => {
   const queryClient = useQueryClient();
   return useMutation<void, Error, { id: string; updates: Partial<Omit<Todo, 'id' | 'createdAt'>> }>({
-    mutationFn: ({ id, updates }) => updateTodo(id, updates),
+    mutationFn: ({ id, updates }) => updateTodo({ id, updates }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QueryKeyGenerator.allTodos() });
     },
@@ -55,8 +55,8 @@ export const useUpdateTodo = () => {
 // Todo를 삭제하는 훅 (Mutation)
 export const useDeleteTodo = () => {
   const queryClient = useQueryClient();
-  return useMutation<void, Error, string>({
-    mutationFn: deleteTodo,
+  return useMutation<void, Error, { id: string }>({
+    mutationFn: ({ id }) => deleteTodo({ id }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QueryKeyGenerator.allTodos() });
     },

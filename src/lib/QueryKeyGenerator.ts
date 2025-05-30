@@ -1,7 +1,6 @@
 const queryKeys = {
   todos: ['todos'] as const, // as const로 튜플 타입 유지
   todoById: (id: string) => ['todos', id] as const,
-  // 다른 도메인의 키들도 추가 가능
   // userProfile: ['user', 'profile'] as const,
 };
 

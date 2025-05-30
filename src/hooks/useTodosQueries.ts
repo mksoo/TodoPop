@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getTodos } from '../api/todoApi';
+import { getTodoById, getTodos } from '../api/todoApi';
 import { Todo } from '../types/todo.types';
 import { QueryKeyGenerator } from '../lib/QueryKeyGenerator';
 
@@ -10,3 +10,10 @@ export const useGetTodos = () => {
     queryFn: getTodos,
   });
 }; 
+
+export const useGetTodo = (id: string) => {
+  return useQuery<Todo, Error>({
+    queryKey: QueryKeyGenerator.todoById(id),
+    queryFn: () => getTodoById({ id }),
+  });
+};
