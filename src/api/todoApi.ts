@@ -1,7 +1,8 @@
 import firestore from '@react-native-firebase/firestore';
+import { plainToTodo } from '../types/adapters/PlainToTodo';
+
 import { todosCollection } from '../lib/firebase'; // 경로 수정
 import { Todo } from '../types/todo.types'; // 경로 수정
-import { plainToTodo } from '@/types/adapters/PlainToTodo';
 
 // Todo 항목을 추가하는 함수
 export const addTodo = async (args: { todo: Omit<Todo, 'id' | 'createdAt'> }): Promise<string> => {
@@ -22,7 +23,10 @@ export const addTodo = async (args: { todo: Omit<Todo, 'id' | 'createdAt'> }): P
 export const getTodos = async (): Promise<Todo[]> => {
   try {
     const snapshot = await todosCollection.orderBy('createdAt', 'desc').get();
-    return snapshot.docs.map(doc => plainToTodo(doc.data()));
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    } as Todo));
   } catch (error) {
     console.error("Error getting documents: ", error);
     throw error;
