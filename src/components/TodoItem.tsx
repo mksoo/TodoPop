@@ -1,20 +1,25 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch, Button } from 'react-native';
 import { Todo } from '../types/todo.types';
+import { useGetTodo } from '../hooks/useTodosQueries';
 
 interface TodoItemProps {
-  item: Todo;
+  itemId: string;
   onToggleComplete: (id: string, completed: boolean) => void;
   onDelete: (id: string) => void;
   // onPress: () => void; // 상세 화면 이동 등을 위한 prop (추후 추가)
 }
 
 const TodoItem: React.FC<TodoItemProps> = React.memo(({
-  item,
+  itemId,
   onToggleComplete,
   onDelete,
   // onPress,
 }) => {
+  const { data: item } = useGetTodo(itemId);
+
+  if (!item) return null;
+
   return (
     <View style={styles.todoItemContainer}>
       <Switch
