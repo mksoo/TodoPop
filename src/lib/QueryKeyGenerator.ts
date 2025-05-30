@@ -8,6 +8,6 @@ export const QueryKeyGenerator = {
   // 모든 Todos를 위한 키
   allTodos: () => queryKeys.todos,
   // 특정 ID의 Todo를 위한 키 (예시 - 상세 조회 시 사용 가능)
-  todoById: (id: string) => queryKeys.todoById(id),
+  todoById: (args: { id: string }) => queryKeys.todoById(args.id),
   // 필요에 따라 더 많은 키 생성 함수 추가
 }; 

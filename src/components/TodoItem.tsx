@@ -1,22 +1,34 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch, Button } from 'react-native';
 import { Todo } from '../types/todo.types';
 import { useGetTodo } from '../hooks/useTodosQueries';
+import { useToggleTodoComplete, useDeleteTodo } from '../hooks/useTodosMutations';
 
 interface TodoItemProps {
   itemId: string;
-  onToggleComplete: (id: string, completed: boolean) => void;
-  onDelete: (id: string) => void;
   // onPress: () => void; // 상세 화면 이동 등을 위한 prop (추후 추가)
 }
 
 const TodoItem: React.FC<TodoItemProps> = React.memo(({
   itemId,
-  onToggleComplete,
-  onDelete,
   // onPress,
 }) => {
   const { data: item } = useGetTodo(itemId);
+
+  console.log('itemId', itemId);
+
+  const { mutateAsync: toggleTodoComplete } = useToggleTodoComplete();
+  const { mutateAsync: deleteTodo } = useDeleteTodo();
+
+  const handleToggleComplete = useCallback(async (args: { id: string, completed: boolean }) => {
+    const { id, completed } = args;
+    await toggleTodoComplete({ id, completed });
+  }, [toggleTodoComplete]);
+
+  const handleDelete = useCallback(async (args: { id: string }) => {
+    const { id } = args;
+    await deleteTodo({id});
+  }, [deleteTodo]);
 
   console.log('item', item);
 
@@ -26,7 +38,7 @@ const TodoItem: React.FC<TodoItemProps> = React.memo(({
     <View style={styles.todoItemContainer}>
       <Switch
         value={item.completed}
-        onValueChange={(value) => onToggleComplete(item.id, value)}
+        onValueChange={(value) => handleToggleComplete({ id: item.id, completed: value })}
       />
       <TouchableOpacity 
         style={styles.todoTextContainer}
@@ -36,7 +48,7 @@ const TodoItem: React.FC<TodoItemProps> = React.memo(({
           {item.title}
         </Text>
       </TouchableOpacity>
-      <Button title="삭제" onPress={() => onDelete(item.id)} color="red" />
+      <Button title="삭제" onPress={() => handleDelete({ id: item.id })} color="red" />
     </View>
   );
 });
