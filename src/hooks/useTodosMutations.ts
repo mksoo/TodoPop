@@ -20,7 +20,7 @@ export const useToggleTodoComplete = () => {
   return useMutation<void, Error, { id: string; completed: boolean }, { previousTodos?: Todo[] }>({
     mutationFn: ({ id, completed }) => updateTodo({ id, updates: { completed } }),
     onMutate: async (variables) => {
-      await queryClient.cancelQueries({ queryKey: QueryKeyGenerator.allTodos() });
+      await queryClient.cancelQueries({ queryKey: QueryKeyGenerator.todoById({ id: variables.id }) });
       const previousTodos = queryClient.getQueryData<Todo[]>(QueryKeyGenerator.allTodos());
       queryClient.setQueryData<Todo[]>(QueryKeyGenerator.allTodos(), (oldTodos) => {
         if (!oldTodos) return [];

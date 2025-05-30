@@ -3,7 +3,7 @@ import { View, Text, FlatList, Button, TextInput, StyleSheet } from 'react-nativ
 import { Todo } from '../types/todo.types';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useGetTodos } from '../hooks/useTodosQueries';
-import { useAddTodo, useToggleTodoComplete, useDeleteTodo } from '../hooks/useTodosMutations';
+import { useAddTodo } from '../hooks/useTodosMutations';
 import TodoItem from '../components/TodoItem';
 
 interface TodoListScreenProps {
@@ -16,30 +16,19 @@ const TodoListScreen: React.FC<TodoListScreenProps> = ({ navigation }) => {
   const { data: todos, isLoading, isError, error } = useGetTodos();
   console.log('todos', todos);
   const addTodoMutation = useAddTodo();
-  const toggleTodoCompleteMutation = useToggleTodoComplete();
-  const deleteTodoMutation = useDeleteTodo();
 
   const handleAdd = useCallback(() => {
     if (!newTodoTitle.trim()) return;
     addTodoMutation.mutate({ title: newTodoTitle, completed: false, failed: false });
     setNewTodoTitle('');
   }, [newTodoTitle, addTodoMutation]);
-
-  const handleToggleComplete = useCallback((id: string, completed: boolean) => {
-    toggleTodoCompleteMutation.mutate({ id, completed });
-  }, [toggleTodoCompleteMutation]);
-
-  const handleDelete = useCallback((id: string) => {
-    deleteTodoMutation.mutate({id});
-  }, [deleteTodoMutation]);
   
-  const renderItem = useCallback(({ item }: { item: Todo }) => (
+  const renderItem = useCallback(({ item }: { item: Todo }) => {
+    return (
     <TodoItem 
       itemId={item.id}
-      onToggleComplete={handleToggleComplete} 
-      onDelete={handleDelete} 
     />
-  ), [handleToggleComplete, handleDelete]);
+  )}, []);
 
   if (isLoading) return <Text>로딩 중...</Text>;
   if (isError || error) return <Text style={styles.errorText}>오류: {error?.message || '알 수 없는 오류'}</Text>;
