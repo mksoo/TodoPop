@@ -9,8 +9,7 @@ export interface RepeatSettings {
 export interface Todo {
   id: string;
   title: string;
-  completed: boolean;
-  failed: boolean;
+  status: 'ONGOING' | 'COMPLETED' | 'FAILED';
   createdAt: FirebaseFirestoreTypes.Timestamp;
   dueDate?: FirebaseFirestoreTypes.Timestamp;
   repeat?: RepeatSettings;
