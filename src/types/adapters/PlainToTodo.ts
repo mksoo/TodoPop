@@ -7,6 +7,7 @@ export const plainToTodo = (data: PlainObject): Todo => {
     title: data.title,
     completed: data.completed,
     failed: data.failed,
+    status: data.status,
     createdAt: data.createdAt,
     dueDate: data.dueDate,
     repeat: data.repeat,
