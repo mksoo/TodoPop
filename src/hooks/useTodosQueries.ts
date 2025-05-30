@@ -14,6 +14,6 @@ export const useGetTodos = () => {
 export const useGetTodo = (id: string) => {
   return useQuery<Todo, Error>({
     queryKey: QueryKeyGenerator.todoById(id),
-    queryFn: () => getTodoById({ id }),
+    queryFn: () => getTodoById({id}),
   });
 };

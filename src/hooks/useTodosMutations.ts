@@ -6,8 +6,8 @@ import { QueryKeyGenerator } from '../lib/QueryKeyGenerator';
 // Todo를 추가하는 훅 (Mutation)
 export const useAddTodo = () => {
   const queryClient = useQueryClient();
-  return useMutation<string, Error, { todo: Omit<Todo, 'id' | 'createdAt'> }>({
-    mutationFn: ({ todo }) => addTodo({ todo }),
+  return useMutation<string, Error, Omit<Todo, 'id' | 'createdAt'>>({
+    mutationFn: (todo) => addTodo({ todo }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QueryKeyGenerator.allTodos() });
     },
