@@ -5,17 +5,14 @@ import { useGetTodo } from '../hooks/useTodosQueries';
 import { useToggleTodoComplete, useDeleteTodo } from '../hooks/useTodosMutations';
 
 interface TodoItemProps {
-  itemId: string;
+  item: Todo;
   // onPress: () => void; // 상세 화면 이동 등을 위한 prop (추후 추가)
 }
 
 const TodoItem: React.FC<TodoItemProps> = React.memo(({
-  itemId,
+  item,
   // onPress,
 }) => {
-  const { data: item } = useGetTodo(itemId);
-
-  console.log('itemId', itemId);
 
   const { mutateAsync: toggleTodoComplete } = useToggleTodoComplete();
   const { mutateAsync: deleteTodo } = useDeleteTodo();
@@ -29,8 +26,6 @@ const TodoItem: React.FC<TodoItemProps> = React.memo(({
     const { id } = args;
     await deleteTodo({id});
   }, [deleteTodo]);
-
-  console.log('item', item);
 
   if (!item) return null;
 

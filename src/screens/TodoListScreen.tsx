@@ -26,7 +26,7 @@ const TodoListScreen: React.FC<TodoListScreenProps> = ({ navigation }) => {
   const renderItem = useCallback(({ item }: { item: Todo }) => {
     return (
     <TodoItem 
-      itemId={item.id}
+      item={item}
     />
   )}, []);
 
