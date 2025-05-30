@@ -1,23 +1,27 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import TodoListScreen from '../screens/TodoListScreen'; // 경로 수정
-
-const Stack = createNativeStackNavigator();
+import TodoEditScreen from '../screens/TodoEditScreen'; // TodoEditScreen import
 
 export type RootStackParamList = {
-  TodoList: undefined; // TodoList 화면은 파라미터가 없음
-  // TodoDetail: { todoId: string }; // 예시: 상세 화면은 todoId 파라미터 필요
+  TodoList: undefined;
+  TodoEdit: { todoId: string };
 };
 
+const Stack = createNativeStackNavigator<RootStackParamList>();
 const AppNavigator = () => {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator initialRouteName="TodoList">
       <Stack.Screen 
         name="TodoList" 
         component={TodoListScreen} 
         options={{ title: '나의 할 일' }}
       />
-      {/* 다른 화면들을 여기에 추가할 수 있습니다. */}
+      <Stack.Screen 
+        name="TodoEdit" 
+        component={TodoEditScreen} 
+        options={{ title: '할 일 수정' }}
+      />
     </Stack.Navigator>
   );
 };

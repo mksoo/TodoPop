@@ -1,27 +1,26 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, Button, TextInput, StyleSheet } from 'react-native';
 import { Todo } from '../types/todo.types';
-import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useGetTodos } from '../hooks/useTodosQueries';
 import { useAddTodo } from '../hooks/useTodosMutations';
 import TodoItem from '../components/TodoItem';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/AppNavigator';
 
-interface TodoListScreenProps {
-  navigation: NavigationProp<ParamListBase>;
-}
 
-const TodoListScreen: React.FC<TodoListScreenProps> = ({ navigation }) => {
+const TodoListScreen: React.FC = () => {
   const [newTodoTitle, setNewTodoTitle] = useState('');
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'TodoList'>>();
 
   const { data: todos, isLoading, isError, error } = useGetTodos();
-  console.log('todos', todos);
-  const addTodoMutation = useAddTodo();
+  const { mutate: addTodo } = useAddTodo();
 
   const handleAdd = useCallback(() => {
     if (!newTodoTitle.trim()) return;
-    addTodoMutation.mutate({ title: newTodoTitle, completed: false, failed: false });
+    addTodo({ title: newTodoTitle });
     setNewTodoTitle('');
-  }, [newTodoTitle, addTodoMutation]);
+  }, [newTodoTitle, addTodo]);
   
   const renderItem = useCallback(({ item }: { item: Todo }) => {
     return (
@@ -35,7 +34,6 @@ const TodoListScreen: React.FC<TodoListScreenProps> = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Todo List</Text>
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -60,12 +58,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#f5f5f5',
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
   },
   inputContainer: {
     flexDirection: 'row',

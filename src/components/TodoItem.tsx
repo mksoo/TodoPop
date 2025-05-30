@@ -1,50 +1,61 @@
 import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch, Button } from 'react-native';
 import { Todo } from '../types/todo.types';
-import { useGetTodo } from '../hooks/useTodosQueries';
-import { useToggleTodoComplete, useDeleteTodo } from '../hooks/useTodosMutations';
+// import { useGetTodo } from '../hooks/useTodosQueries'; // TodoItem에서는 직접 사용하지 않음
+import { useUpdateTodoStatus, useDeleteTodo } from '../hooks/useTodosMutations';
+import { useNavigation } from '@react-navigation/native'; // NavigationProp, ParamListBase 제거 가능
+import { NativeStackNavigationProp } from '@react-navigation/native-stack'; // NativeStackNavigationProp import
+import { RootStackParamList } from '../navigation/AppNavigator';
+import { colors, spacing, fontSize, borderRadius } from '../styles';
 
 interface TodoItemProps {
   item: Todo;
-  // onPress: () => void; // 상세 화면 이동 등을 위한 prop (추후 추가)
 }
 
 const TodoItem: React.FC<TodoItemProps> = React.memo(({
   item,
-  // onPress,
 }) => {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>(); 
 
-  const { mutateAsync: toggleTodoComplete } = useToggleTodoComplete();
+  const { mutateAsync: updateTodoStatus } = useUpdateTodoStatus();
   const { mutateAsync: deleteTodo } = useDeleteTodo();
 
-  const handleToggleComplete = useCallback(async (args: { id: string, completed: boolean }) => {
-    const { id, completed } = args;
-    await toggleTodoComplete({ id, completed });
-  }, [toggleTodoComplete]);
+  const handleToggleStatusCb = useCallback(async () => {
+    const newStatus = item.status === 'COMPLETED' ? 'ONGOING' : 'COMPLETED';
+    await updateTodoStatus({ id: item.id, status: newStatus });
+  }, [updateTodoStatus, item.id, item.status]);
 
-  const handleDelete = useCallback(async (args: { id: string }) => {
-    const { id } = args;
-    await deleteTodo({id});
-  }, [deleteTodo]);
+  const handleDeleteCb = useCallback(async () => {
+    await deleteTodo({ id: item.id });
+  }, [deleteTodo, item.id]);
+
+  const handleNavigateToEdit = () => {
+    navigation.navigate('TodoEdit', { todoId: item.id });
+  };
 
   if (!item) return null;
 
   return (
-    <View style={styles.todoItemContainer}>
-      <Switch
-        value={item.completed}
-        onValueChange={(value) => handleToggleComplete({ id: item.id, completed: value })}
-      />
-      <TouchableOpacity 
-        style={styles.todoTextContainer}
-        // onPress={onPress} // 상세 화면 이동 등을 위한 핸들러
-      >
-        <Text style={[styles.todoTitle, item.completed && styles.completedTodo]}>
+    <TouchableOpacity 
+      style={styles.todoItemContainer}
+      onPress={handleNavigateToEdit}>
+
+      <TouchableOpacity onPress={handleToggleStatusCb} style={[
+        styles.checkboxContainer,
+        item.status === 'COMPLETED' && styles.checkboxContainerCompleted
+      ]}>
+        {item.status === 'COMPLETED' && (
+          <Text style={styles.checkmark}>✓</Text>
+        )}
+      </TouchableOpacity>
+      
+      <View style={styles.todoTextContainer}>
+        <Text style={[styles.todoTitle, item.status === 'COMPLETED' && styles.completedTodo]}>
           {item.title}
         </Text>
-      </TouchableOpacity>
-      <Button title="삭제" onPress={() => handleDelete({ id: item.id })} color="red" />
-    </View>
+      </View>
+      <Button title="삭제" onPress={handleDeleteCb} color="red" />
+    </TouchableOpacity>
   );
 });
 
@@ -52,26 +63,46 @@ const styles = StyleSheet.create({
   todoItemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
-    marginBottom: 10,
-    backgroundColor: 'white',
-    borderRadius: 5,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    backgroundColor: colors.background.primary,
+    borderRadius: borderRadius.sm,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: colors.text.primary,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 1,
   },
   todoTextContainer: {
     flex: 1,
-    marginLeft: 10,
+    marginLeft: spacing.sm,
   },
   todoTitle: {
-    fontSize: 18,
+    fontSize: fontSize.md,
+    color: colors.text.primary,
   },
   completedTodo: {
     textDecorationLine: 'line-through',
-    color: '#aaa',
+    color: colors.text.secondary,
+  },
+  checkboxContainer: {
+    width: spacing.lg,
+    height: spacing.lg,
+    borderRadius: borderRadius.round,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background.primary,
+  },
+  checkboxContainerCompleted: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  checkmark: {
+    color: colors.background.primary,
+    fontSize: fontSize.md,
+    fontWeight: 'bold',
   },
 });
 

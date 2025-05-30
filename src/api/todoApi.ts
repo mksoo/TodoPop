@@ -5,11 +5,12 @@ import { todosCollection } from '../lib/firebase'; // 경로 수정
 import { Todo } from '../types/todo.types'; // 경로 수정
 
 // Todo 항목을 추가하는 함수
-export const addTodo = async (args: { todo: Omit<Todo, 'id' | 'createdAt'> }): Promise<string> => {
+export const addTodo = async (args: { todo: Omit<Todo, 'id' | 'createdAt' | 'status'> & { title: string } }): Promise<string> => {
   const { todo } = args;
   try {
     const docRef = await todosCollection.add({
       ...todo,
+      status: 'ONGOING', // 초기 상태를 ONGOING으로 설정
       createdAt: firestore.FieldValue.serverTimestamp(),
     });
     return docRef.id;
