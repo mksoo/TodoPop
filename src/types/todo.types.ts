@@ -53,6 +53,8 @@ export interface Todo {
   status: TodoStatus;
   /** 생성일 */
   createdAt: FirebaseFirestoreTypes.Timestamp;
+  /** 완료일 (선택 사항) */
+  completedAt?: FirebaseFirestoreTypes.Timestamp | null;
   /** 마감일 (선택 사항) */
   dueDate?: FirebaseFirestoreTypes.Timestamp | null; 
   /** 
@@ -60,6 +62,10 @@ export interface Todo {
    * 이 설정이 존재하면 해당 Todo는 반복되는 항목으로 간주됩니다.
    */
   repeatSettings?: RepeatSettings;
+  /** 태그 (선택 사항) */
+  tags?: string[];
+  /** 캘린더 이벤트 Id(구글 캘린더 연동용) (선택 사항) */
+  calendarEventId?: string;
   /** 
    * 다음 발생 예정일 (타임스탬프 또는 null).
    * 반복되지 않는 일반 Todo의 경우 생성 시점 또는 마감일로 설정될 수 있습니다.
