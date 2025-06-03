@@ -46,42 +46,21 @@ export const addTodo = async (args: { todo: Omit<Todo, 'id' | 'createdAt' | 'sta
 
 /**
  * Firestore에서 할 일(Todo) 목록을 가져옵니다.
- * 현재는 `nextOccurrence`가 존재하고, 그 값이 현재 시간보다 작거나 같은 (즉, 이미 발생했거나 오늘 발생할) 
- * 할 일들만 가져오며, `nextOccurrence` 기준으로 오름차순 정렬합니다.
  * 
  * @returns `Todo` 객체의 배열.
  * @throws Firestore 작업 중 오류 발생 시 해당 오류를 throw합니다.
  */
 export const getTodos = async (): Promise<Todo[]> => {
   try {
-    const now = Timestamp.now();
-    
-    // 쿼리 조건:
-    // 1. nextOccurrence 필드가 null이 아님 (즉, 존재해야 함)
-    // 2. nextOccurrence 값이 현재 시간 (now)보다 작거나 같음
-    // 정렬: nextOccurrence 오름차순
     const q = query(
       todosCollection, 
-      where('nextOccurrence', '!=', null),
-      where('nextOccurrence', '<=', now),
-      orderBy('nextOccurrence', 'asc')
+      where('status', '==', 'ONGOING'),
+      orderBy('createdAt', 'desc')
     );
 
     const snapshot = await getDocs(q);
 
-    // Firestore 문서들을 Todo 객체로 변환 (id 포함)
-    // 여기서 data()의 타입은 DocumentData이므로, Todo 타입으로 단언하거나 변환 함수 사용.
-    // plainToTodo를 여기서 직접 사용할 수도 있지만, 현재는 반환 후 훅에서 변환하는 구조로 예상됨.
-    // Firestore의 데이터를 Todo 타입으로 변환하는 것은 plainToTodo 어댑터의 역할.
-    // 다만, Firestore에서 직접 가져온 데이터는 Timestamp 객체를 포함하므로 plainToTodo는 주로 JS 객체 -> Todo 변환에 사용.
-    // 여기서는 Firestore 데이터를 바로 Todo 타입으로 캐스팅 (리스크 존재 가능, 데이터 구조 일치 중요)
-    const todosFromDb = snapshot.docs.map(doc => {
-      const data = doc.data();
-      // data()는 Todo 타입의 필드를 포함해야 함. Firestore의 Timestamp는 그대로 유지.
-      return plainToTodo({ id: doc.id, ...data });
-    });
-
-    return todosFromDb;
+    return snapshot.docs.map(doc => (plainToTodo({ id: doc.id, ...doc.data() })));
 
   } catch (error) {
     console.error("Error getting documents from todoApi: ", error);
