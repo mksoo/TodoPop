@@ -184,9 +184,6 @@ export const useUpdateTodo = () => {
       const currentTodo = await getTodoById({ id });
       if (!currentTodo) throw new Error('Todo not found for update');
 
-      console.log('currentTodo', currentTodo);
-      console.log('updates', updates);
-
       const finalUpdates: Partial<Todo> = { ...updates };
 
       // repeatSettings 또는 dueDate가 변경되었는지, 또는 repeatSettings가 새로 추가/삭제되었는지 확인
