@@ -8,9 +8,9 @@ export const useCheckAndCreateUser = () => {
     mutationFn: (firebaseUser: FirebaseAuthTypes.User) => 
       checkAndCreateUserDocument(firebaseUser),
     onSuccess: (data) => {
-      // API 함수에서 반환된 message를 사용하여 Alert 표시
-      Alert.alert(data.isNewUser ? '회원가입 완료' : '로그인 성공', data.message);
-      console.log('User check/creation successful:', data);
+      // API 함수에서 반환된 message를 사용하여 Alert 표시 -> 제거
+      // Alert.alert(data.isNewUser ? '회원가입 완료' : '로그인 성공', data.message);
+      console.log('User check/creation successful. Message:', data.message, 'UserData:', data.userData);
     },
     onError: (error) => {
       // API 함수에서 throw된 에러 또는 네트워크 에러 등을 처리

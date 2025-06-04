@@ -1,13 +1,16 @@
 import React from 'react';
-import { View, Button, StyleSheet, Alert, Platform, Text } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Alert, Platform, Text } from 'react-native';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import auth from '@react-native-firebase/auth';
 import { useCheckAndCreateUser } from '../hooks/userMutations';
+import { colors } from '../styles';
 
 const LoginScreen = () => {
   const { mutate: checkAndCreateUser, isPending: isCheckingUser } = useCheckAndCreateUser();
 
   const signInWithGoogle = async () => {
+    if (isCheckingUser) return;
+
     try {
       if (Platform.OS === 'android') {
         await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
@@ -32,7 +35,7 @@ const LoginScreen = () => {
 
     } catch (error: any) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        Alert.alert('Login Cancelled', 'User cancelled the login flow.');
+        console.log('User cancelled the login flow.');
       } else if (error.code === statusCodes.IN_PROGRESS) {
         Alert.alert('Login In Progress', 'Operation (e.g. sign in) is in progress already.');
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
@@ -47,11 +50,18 @@ const LoginScreen = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>TodoPop</Text>
-      <Button 
-        title={isCheckingUser ? "로그인 중..." : "Google 계정으로 로그인"} 
+      <TouchableOpacity 
+        style={[styles.googleButton, isCheckingUser && styles.googleButtonDisabled]} 
         onPress={signInWithGoogle} 
         disabled={isCheckingUser}
-      />
+      >
+        <View style={styles.googleIconWrapper}>
+          <Text style={styles.googleIcon}>G</Text>
+        </View>
+        <Text style={styles.googleButtonText}>
+          {isCheckingUser ? "로그인 중..." : "Google 계정으로 로그인"}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -62,13 +72,50 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background.secondary,
   },
   title: {
-    fontSize: 32,
+    fontSize: 48,
     fontWeight: 'bold',
-    marginBottom: 48,
-    color: '#333',
+    marginBottom: 64,
+    color: colors.text.primary,
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#4285F4',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+    minWidth: 250,
+    justifyContent: 'center',
+  },
+  googleButtonDisabled: {
+    backgroundColor: colors.text.disabled,
+  },
+  googleIconWrapper: {
+    backgroundColor: colors.background.primary,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 24,
+  },
+  googleIcon: {
+    color: '#4285F4',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  googleButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   }
 });
 
