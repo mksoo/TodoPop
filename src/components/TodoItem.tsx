@@ -5,7 +5,7 @@ import { Todo } from '../types/todo.types';
 import { useUpdateTodoStatus, useDeleteTodo } from '../hooks/useTodosMutations';
 import { useNavigation } from '@react-navigation/native'; // NavigationProp, ParamListBase 제거 가능
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'; // NativeStackNavigationProp import
-import { RootStackParamList } from '../navigation/AppNavigator';
+import { MainStackParamList } from '../navigation/AppNavigator'; // MainStackParamList import
 import { colors, spacing, fontSize, borderRadius } from '../styles';
 
 interface TodoItemProps {
@@ -15,7 +15,7 @@ interface TodoItemProps {
 const TodoItem: React.FC<TodoItemProps> = React.memo(({
   item,
 }) => {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>(); 
+  const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>(); 
 
   const { mutateAsync: updateTodoStatus } = useUpdateTodoStatus();
   const { mutateAsync: deleteTodo } = useDeleteTodo();

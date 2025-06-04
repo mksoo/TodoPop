@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, ScrollView, Switch, TouchableOpacity, Platform } from 'react-native';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/AppNavigator';
+import { MainStackParamList } from '../navigation/AppNavigator';
 import { useGetTodoById } from '../hooks/useTodosQueries';
 import { useUpdateTodo } from '../hooks/useTodosMutations';
 import { Todo, RepeatSettings, RepeatFrequency } from '../types/todo.types';
@@ -11,14 +11,14 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import dayjs from 'dayjs';
 
-type TodoEditScreenRouteProp = RouteProp<RootStackParamList, 'TodoEdit'>;
+type TodoEditScreenRouteProp = RouteProp<MainStackParamList, 'TodoEdit'>;
 
 const frequencies: RepeatFrequency[] = ['daily', 'weekly', 'monthly'];
 const daysInWeek = ['일', '월', '화', '수', '목', '금', '토'];
 
 const TodoEditScreen: React.FC = () => {
   const route = useRoute<TodoEditScreenRouteProp>();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
   const { todoId } = route.params;
 
   const { data: todo, isLoading, isError, error } = useGetTodoById({ id: todoId });
