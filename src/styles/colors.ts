@@ -17,5 +17,16 @@ export const colors = {
     light: '#ecf0f1',
     default: '#bdc3c7',
     dark: '#95a5a6',
+  },
+  grayscale: {
+    100: '#f5f5f5',
+    200: '#e0e0e0',
+    300: '#bdbdbd',
+    400: '#9e9e9e',
+    500: '#757575',
+    600: '#616161',
+    700: '#424242',
+    800: '#212121',
+    900: '#000000',
   }
 } as const; 

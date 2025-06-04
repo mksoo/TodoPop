@@ -102,7 +102,14 @@ const TodoEditScreen: React.FC = () => {
           onChange={handleDateChange}
         />
       )}
-      <Button title={dueDate ? "마감일 초기화" : "마감일 설정 안 함"} onPress={() => setDueDate(undefined)} color={colors.text.secondary} />
+      <TouchableOpacity 
+        style={styles.secondaryButton} 
+        onPress={() => setDueDate(undefined)}
+      >
+        <Text style={styles.secondaryButtonText}>
+          {dueDate ? "마감일 초기화" : "마감일 설정 안 함"}
+        </Text>
+      </TouchableOpacity>
 
       <View style={styles.switchContainer}>
         <Text style={styles.label}>반복 설정</Text>
@@ -182,7 +189,15 @@ const TodoEditScreen: React.FC = () => {
       )}
 
       <View style={styles.buttonContainer}>
-        <Button title={isUpdating ? "저장 중..." : "저장"} onPress={handleSave} disabled={isUpdating} color={colors.primary} />
+        <TouchableOpacity 
+          style={[styles.saveButton, isUpdating && styles.saveButtonDisabled]} 
+          onPress={handleSave} 
+          disabled={isUpdating}
+        >
+          <Text style={styles.saveButtonText}>
+            {isUpdating ? "저장 중..." : "저장"}
+          </Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -195,6 +210,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: spacing.md,
+    paddingBottom: spacing.xl,
   },
   label: {
     fontSize: fontSize.md,
@@ -226,6 +242,22 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: fontSize.md,
     color: colors.text.primary,
+  },
+  secondaryButton: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  secondaryButtonText: {
+    color: colors.text.secondary,
+    fontSize: fontSize.sm,
+    fontWeight: '500',
   },
   switchContainer: {
     flexDirection: 'row',
@@ -268,13 +300,33 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
   },
   optionButtonTextSelected: {
-    color: colors.background.primary,
+    color: '#FFFFFF',
     fontWeight: 'bold',
   },
   buttonContainer: {
     marginTop: spacing.lg,
-    marginBottom: spacing.xl,
-  }
+  },
+  saveButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+  },
+  saveButtonDisabled: {
+    backgroundColor: colors.text.disabled,
+    elevation: 0,
+  },
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontSize: fontSize.md,
+    fontWeight: 'bold',
+  },
 });
 
 export default TodoEditScreen; 

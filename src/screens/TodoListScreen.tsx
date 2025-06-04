@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { View, Text, FlatList, Button, TextInput, StyleSheet, Alert } from 'react-native';
+import { View, Text, FlatList, Button, TextInput, StyleSheet, Alert, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Todo, RepeatSettings } from '../types/todo.types';
 import { useGetTodos } from '../hooks/useTodosQueries';
 import { useAddTodo } from '../hooks/useTodosMutations';
@@ -12,13 +12,15 @@ import { Timestamp } from '@react-native-firebase/firestore';
 import { colors, spacing, fontSize, borderRadius } from '../styles';
 import auth from '@react-native-firebase/auth';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { useAuth } from '../contexts/AuthContext';
 
 const TodoListScreen: React.FC = () => {
   const [newTodoTitle, setNewTodoTitle] = useState('');
   const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList, 'TodoList'>>();
 
-  const { data: todos, isLoading, isError, error } = useGetTodos();
+  const { data: todos, isLoading: isTodosLoading, isError: todosError, error } = useGetTodos();
   const { mutate: addTodoMutate } = useAddTodo();
+  const { currentUser, isLoading: isAuthLoading } = useAuth();
 
   const handleLogout = useCallback(async () => {
     try {
@@ -33,10 +35,20 @@ const TodoListScreen: React.FC = () => {
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <Button onPress={handleLogout} title="로그아웃" color={colors.danger} />
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {currentUser?.photoURL && (
+            <Image 
+              source={{ uri: currentUser.photoURL }}
+              style={styles.userPhoto} 
+            />
+          )}
+          <TouchableOpacity onPress={handleLogout} style={{ marginRight: spacing.md }}>
+            <Text style={{ color: colors.primary }}>로그아웃</Text>
+          </TouchableOpacity>
+        </View>
       ),
     });
-  }, [navigation, handleLogout]);
+  }, [navigation, handleLogout, currentUser]);
 
   const handleAdd = useCallback(() => {
     if (!newTodoTitle.trim()) return;
@@ -62,8 +74,8 @@ const TodoListScreen: React.FC = () => {
     );
   }, []);
 
-  if (isLoading) return <Text style={styles.loadingText}>로딩 중...</Text>;
-  if (isError || error) return <Text style={styles.errorText}>오류: {error?.message || '알 수 없는 오류'}</Text>;
+  if (isTodosLoading) return <Text style={styles.loadingText}>로딩 중...</Text>;
+  if (todosError || error) return <Text style={[styles.errorText, {color: colors.danger}]}>할 일 목록을 불러오는 중 오류가 발생했습니다: {error?.message || '알 수 없는 오류'}</Text>;
 
   return (
     <View style={styles.container}>
@@ -92,7 +104,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: spacing.md,
-    backgroundColor: colors.background.secondary,
+    backgroundColor: colors.background.primary,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -110,20 +122,37 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   errorText: {
-    color: colors.danger,
+    padding: spacing.md,
     textAlign: 'center',
-    marginBottom: spacing.sm,
-    fontSize: fontSize.md,
+    fontSize: 16,
   },
   loadingText: {
-    textAlign: 'center',
-    fontSize: fontSize.lg,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    fontSize: 18,
     color: colors.text.secondary,
-    padding: spacing.lg,
   },
   listContentContainer: {
     paddingBottom: spacing.md,
-  }
+  },
+  welcomeContainer: {
+    padding: spacing.lg,
+    backgroundColor: colors.background.secondary,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.default,
+  },
+  welcomeText: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: colors.text.primary,
+  },
+  userPhoto: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    marginRight: spacing.md,
+  },
 });
 
 export default TodoListScreen; 
