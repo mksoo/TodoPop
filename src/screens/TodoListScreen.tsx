@@ -1,28 +1,48 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, FlatList, Button, TextInput, StyleSheet } from 'react-native';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { View, Text, FlatList, Button, TextInput, StyleSheet, Alert } from 'react-native';
 import { Todo, RepeatSettings } from '../types/todo.types';
 import { useGetTodos } from '../hooks/useTodosQueries';
 import { useAddTodo } from '../hooks/useTodosMutations';
 import TodoItem from '../components/TodoItem';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/AppNavigator';
+import { MainStackParamList } from '../navigation/AppNavigator';
 import { shouldShowTodo } from '../utils/repeatUtils';
-import firestore from '@react-native-firebase/firestore';
+import { Timestamp } from '@react-native-firebase/firestore';
 import { colors, spacing, fontSize, borderRadius } from '../styles';
+import auth from '@react-native-firebase/auth';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 const TodoListScreen: React.FC = () => {
   const [newTodoTitle, setNewTodoTitle] = useState('');
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'TodoList'>>();
+  const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList, 'TodoList'>>();
 
   const { data: todos, isLoading, isError, error } = useGetTodos();
   const { mutate: addTodoMutate } = useAddTodo();
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await GoogleSignin.signOut();
+      await auth().signOut();
+    } catch (e: any) {
+      Alert.alert('로그아웃 오류', e.message || '알 수 없는 오류가 발생했습니다.');
+      console.error('Logout error:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Button onPress={handleLogout} title="로그아웃" color={colors.danger} />
+      ),
+    });
+  }, [navigation, handleLogout]);
 
   const handleAdd = useCallback(() => {
     if (!newTodoTitle.trim()) return;
     addTodoMutate({ 
       title: newTodoTitle, 
-      nextOccurrence: firestore.Timestamp.now(),
+      nextOccurrence: Timestamp.now(),
     });
     setNewTodoTitle('');
   }, [newTodoTitle, addTodoMutate]);
