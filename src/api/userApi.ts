@@ -26,7 +26,7 @@ export const checkAndCreateUserDocument = async (
     const userDocRef = usersCollection.doc(firebaseUser.uid);
     const userDoc = await userDocRef.get();
 
-    if (!userDoc.exists) {
+    if (!userDoc.exists()) {
       // 신규 사용자: Firestore에 정보 저장
       const newUserData: FirestoreUser = {
         uid: firebaseUser.uid,
