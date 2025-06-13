@@ -10,6 +10,7 @@ import { colors, spacing, fontSize, borderRadius } from '../styles';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import dayjs from 'dayjs';
+import Badge from '../components/Badge';
 
 type TodoEditScreenRouteProp = RouteProp<MainStackParamList, 'TodoEdit'>;
 
@@ -81,6 +82,29 @@ const TodoEditScreen: React.FC = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <View style={styles.statusContainer}>
+        <Text style={styles.label}>상태</Text>
+        {todo && (
+          <Badge
+          label={
+            todo.status === 'COMPLETED'
+            ? '완료됨'
+            : todo.status === 'ONGOING'
+            ? '진행중'
+            : '실패'
+          }
+          color={
+            todo.status === 'COMPLETED'
+            ? colors.success
+            : todo.status === 'ONGOING'
+            ? colors.primary
+            : colors.danger
+          }
+          textColor={colors.grayscale[100]}
+          style={{ marginBottom: 8 }}
+          />
+        )}  
+      </View>
       <Text style={styles.label}>제목</Text>
       <TextInput
         style={styles.input}
@@ -216,7 +240,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.text.primary,
     marginBottom: spacing.sm,
-    marginTop: spacing.md,
     fontWeight: '500',
   },
   input: {
@@ -300,7 +323,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
   },
   optionButtonTextSelected: {
-    color: '#FFFFFF',
+    color: colors.grayscale[100],
     fontWeight: 'bold',
   },
   buttonContainer: {
@@ -313,7 +336,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: colors.grayscale[900],
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.22,
     shadowRadius: 2.22,
@@ -323,9 +346,15 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   saveButtonText: {
-    color: '#FFFFFF',
+    color: colors.grayscale[100],
     fontSize: fontSize.md,
     fontWeight: 'bold',
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: spacing.sm,
   },
 });
 

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { View, Text, FlatList, Button, TextInput, StyleSheet, Alert, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, Button, TextInput, StyleSheet, Alert, Image, TouchableOpacity, ActivityIndicator, SectionList } from 'react-native';
 import { Todo, RepeatSettings } from '../types/todo.types';
 import { useGetTodos } from '../hooks/useTodosQueries';
 import { useAddTodo } from '../hooks/useTodosMutations';
@@ -7,7 +7,6 @@ import TodoItem from '../components/TodoItem';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MainStackParamList } from '../navigation/AppNavigator';
-import { shouldShowTodo } from '../utils/repeatUtils';
 import { Timestamp } from '@react-native-firebase/firestore';
 import { colors, spacing, fontSize, borderRadius } from '../styles';
 import auth from '@react-native-firebase/auth';
@@ -18,9 +17,10 @@ const TodoListScreen: React.FC = () => {
   const [newTodoTitle, setNewTodoTitle] = useState('');
   const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList, 'TodoList'>>();
 
-  const { data: todos, isLoading: isTodosLoading, isError: todosError, error } = useGetTodos();
-  const { mutate: addTodoMutate } = useAddTodo();
-  const { currentUser, isLoading: isAuthLoading } = useAuth();
+  const { currentUser } = useAuth();
+
+  const { data: todos, isLoading: isTodosLoading, isError: todosError, error } = useGetTodos({uid: currentUser?.uid ?? ''});
+  const { mutateAsync: addTodoMutate } = useAddTodo({uid: currentUser?.uid ?? ''});
 
   const handleLogout = useCallback(async () => {
     try {
@@ -58,15 +58,6 @@ const TodoListScreen: React.FC = () => {
     });
     setNewTodoTitle('');
   }, [newTodoTitle, addTodoMutate]);
-  
-  const visibleTodos = useMemo(() => {
-    if (!todos) return [];
-    return todos.filter(todo => shouldShowTodo({
-      status: todo.status,
-      nextOccurrence: todo.nextOccurrence,
-      repeatSettings: todo.repeatSettings,
-    }));
-  }, [todos]);
 
   const renderItem = useCallback(({ item }: { item: Todo }) => {
     return (
@@ -76,6 +67,28 @@ const TodoListScreen: React.FC = () => {
 
   if (isTodosLoading) return <Text style={styles.loadingText}>로딩 중...</Text>;
   if (todosError || error) return <Text style={[styles.errorText, {color: colors.danger}]}>할 일 목록을 불러오는 중 오류가 발생했습니다: {error?.message || '알 수 없는 오류'}</Text>;
+
+  const ongoingTodos = todos?.filter(todo => todo.status === 'ONGOING') || [];
+  const completedTodos = todos?.filter(todo => todo.status === 'COMPLETED') || [];
+  const failedTodos = todos?.filter(todo => todo.status === 'FAILED') || [];
+
+  const sections = [
+    {
+      title: '진행중',
+      data: ongoingTodos,
+      emptyText: '할 일이 없습니다.',
+    },
+    {
+      title: '완료됨',
+      data: completedTodos,
+      emptyText: '완료된 할 일이 없습니다.',
+    },
+    {
+      title: '실패',
+      data: failedTodos,
+      emptyText: '실패한 할 일이 없습니다.',
+    },
+  ];
 
   return (
     <View style={styles.container}>
@@ -90,11 +103,20 @@ const TodoListScreen: React.FC = () => {
         />
         <Button title="추가" onPress={handleAdd} color={colors.primary} />
       </View>
-      <FlatList
-        data={visibleTodos}
-        renderItem={renderItem}
+      <SectionList
+        sections={sections}
         keyExtractor={(item) => item.id}
+        renderSectionHeader={({ section }) => (
+          <Text style={styles.sectionTitle}>{section.title}</Text>
+        )}
+        renderItem={({ item }) => <TodoItem item={item} />}
+        renderSectionFooter={({ section }) =>
+          section.data.length === 0 ? (
+            <Text style={styles.emptyText}>{section.emptyText}</Text>
+          ) : null
+        }
         contentContainerStyle={styles.listContentContainer}
+        stickySectionHeadersEnabled={false}
       />
     </View>
   );
@@ -152,6 +174,19 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 15,
     marginRight: spacing.md,
+  },
+  sectionTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: 'bold',
+    color: colors.text.primary,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+  },
+  emptyText: {
+    color: colors.text.secondary,
+    fontSize: fontSize.md,
+    marginBottom: spacing.md,
+    marginLeft: spacing.sm,
   },
 });
 
