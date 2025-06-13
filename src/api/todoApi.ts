@@ -80,7 +80,7 @@ export const getTodos = async (args: { uid: string }): Promise<Todo[]> => {
  */
 export const getTodoById = async (args: { id: string }): Promise<Todo> => {
   const { id } = args;
-  const docRef = doc(db, 'todos', id); // db 참조, 컬렉션 이름, 문서 ID로 문서 참조 생성
+  const docRef = doc(todosCollection, id); // db 참조, 컬렉션 이름, 문서 ID로 문서 참조 생성
   const docSnap = await getDoc(docRef);
 
   if (!docSnap.exists()) {
