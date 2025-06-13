@@ -4,9 +4,9 @@ import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
  * 할 일의 완료 상태를 나타내는 타입입니다.
  * - ONGOING: 진행 중
  * - COMPLETED: 완료됨
- * - PENDING: 보류 (아직 사용되지 않음, 향후 확장을 위해 포함 가능)
+ * - FAILED: 실패
  */
-export type TodoStatus = 'ONGOING' | 'COMPLETED' | 'PENDING';
+export type TodoStatus = 'ONGOING' | 'COMPLETED' | 'FAILED';
 
 /**
  * 할 일의 반복 빈도를 나타내는 타입입니다.
