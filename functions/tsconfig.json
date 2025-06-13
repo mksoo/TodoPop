@@ -1,12 +1,18 @@
 {
   "compilerOptions": {
     "module": "commonjs",
+    "target": "es2017",
+    "lib": ["es2017", "esnext.asynciterable"],
+    "outDir": "lib",
+    "rootDir": "src",
+    "strict": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "sourceMap": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
-    "outDir": "lib",
-    "sourceMap": true,
-    "strict": true,
-    "target": "es2017"
+    "skipLibCheck": true
   },
   "compileOnSave": true,
   "include": [
