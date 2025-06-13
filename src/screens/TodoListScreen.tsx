@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { View, Text, FlatList, Button, TextInput, StyleSheet, Alert, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, Button, TextInput, StyleSheet, Alert, Image, TouchableOpacity, ActivityIndicator, SectionList } from 'react-native';
 import { Todo, RepeatSettings } from '../types/todo.types';
 import { useGetTodos } from '../hooks/useTodosQueries';
 import { useAddTodo } from '../hooks/useTodosMutations';
@@ -72,6 +72,24 @@ const TodoListScreen: React.FC = () => {
   const completedTodos = todos?.filter(todo => todo.status === 'COMPLETED') || [];
   const failedTodos = todos?.filter(todo => todo.status === 'FAILED') || [];
 
+  const sections = [
+    {
+      title: '진행중',
+      data: ongoingTodos,
+      emptyText: '할 일이 없습니다.',
+    },
+    {
+      title: '완료됨',
+      data: completedTodos,
+      emptyText: '완료된 할 일이 없습니다.',
+    },
+    {
+      title: '실패',
+      data: failedTodos,
+      emptyText: '실패한 할 일이 없습니다.',
+    },
+  ];
+
   return (
     <View style={styles.container}>
       <View style={styles.inputContainer}>
@@ -85,28 +103,21 @@ const TodoListScreen: React.FC = () => {
         />
         <Button title="추가" onPress={handleAdd} color={colors.primary} />
       </View>
-      <View style={styles.listContentContainer}>
-        <Text style={styles.sectionTitle}>진행중</Text>
-        {ongoingTodos.length === 0 ? (
-          <Text style={styles.emptyText}>할 일이 없습니다.</Text>
-        ) : (
-          ongoingTodos.map(item => <TodoItem key={item.id} item={item} />)
+      <SectionList
+        sections={sections}
+        keyExtractor={(item) => item.id}
+        renderSectionHeader={({ section }) => (
+          <Text style={styles.sectionTitle}>{section.title}</Text>
         )}
-
-        <Text style={styles.sectionTitle}>완료됨</Text>
-        {completedTodos.length === 0 ? (
-          <Text style={styles.emptyText}>완료된 할 일이 없습니다.</Text>
-        ) : (
-        completedTodos.map(item => <TodoItem key={item.id} item={item} />)
-        )}
-
-        <Text style={styles.sectionTitle}>실패</Text>
-        {failedTodos.length === 0 ? (
-          <Text style={styles.emptyText}>실패한 할 일이 없습니다.</Text>
-        ) : (
-          failedTodos.map(item => <TodoItem key={item.id} item={item} />)
-        )}
-      </View>
+        renderItem={({ item }) => <TodoItem item={item} />}
+        renderSectionFooter={({ section }) =>
+          section.data.length === 0 ? (
+            <Text style={styles.emptyText}>{section.emptyText}</Text>
+          ) : null
+        }
+        contentContainerStyle={styles.listContentContainer}
+        stickySectionHeadersEnabled={false}
+      />
     </View>
   );
 };
