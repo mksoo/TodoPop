@@ -17,9 +17,10 @@ const TodoListScreen: React.FC = () => {
   const [newTodoTitle, setNewTodoTitle] = useState('');
   const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList, 'TodoList'>>();
 
-  const { data: todos, isLoading: isTodosLoading, isError: todosError, error } = useGetTodos();
-  const { mutateAsync: addTodoMutate } = useAddTodo();
   const { currentUser } = useAuth();
+
+  const { data: todos, isLoading: isTodosLoading, isError: todosError, error } = useGetTodos({uid: currentUser?.uid ?? ''});
+  const { mutateAsync: addTodoMutate } = useAddTodo({uid: currentUser?.uid ?? ''});
 
   const handleLogout = useCallback(async () => {
     try {
@@ -67,6 +68,10 @@ const TodoListScreen: React.FC = () => {
   if (isTodosLoading) return <Text style={styles.loadingText}>로딩 중...</Text>;
   if (todosError || error) return <Text style={[styles.errorText, {color: colors.danger}]}>할 일 목록을 불러오는 중 오류가 발생했습니다: {error?.message || '알 수 없는 오류'}</Text>;
 
+  const ongoingTodos = todos?.filter(todo => todo.status === 'ONGOING') || [];
+  const completedTodos = todos?.filter(todo => todo.status === 'COMPLETED') || [];
+  const failedTodos = todos?.filter(todo => todo.status === 'FAILED') || [];
+
   return (
     <View style={styles.container}>
       <View style={styles.inputContainer}>
@@ -80,12 +85,28 @@ const TodoListScreen: React.FC = () => {
         />
         <Button title="추가" onPress={handleAdd} color={colors.primary} />
       </View>
-      <FlatList
-        data={todos}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContentContainer}
-      />
+      <View style={styles.listContentContainer}>
+        <Text style={styles.sectionTitle}>진행중</Text>
+        {ongoingTodos.length === 0 ? (
+          <Text style={styles.emptyText}>할 일이 없습니다.</Text>
+        ) : (
+          ongoingTodos.map(item => <TodoItem key={item.id} item={item} />)
+        )}
+
+        <Text style={styles.sectionTitle}>완료됨</Text>
+        {completedTodos.length === 0 ? (
+          <Text style={styles.emptyText}>완료된 할 일이 없습니다.</Text>
+        ) : (
+        completedTodos.map(item => <TodoItem key={item.id} item={item} />)
+        )}
+
+        <Text style={styles.sectionTitle}>실패</Text>
+        {failedTodos.length === 0 ? (
+          <Text style={styles.emptyText}>실패한 할 일이 없습니다.</Text>
+        ) : (
+          failedTodos.map(item => <TodoItem key={item.id} item={item} />)
+        )}
+      </View>
     </View>
   );
 };
@@ -142,6 +163,19 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 15,
     marginRight: spacing.md,
+  },
+  sectionTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: 'bold',
+    color: colors.text.primary,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+  },
+  emptyText: {
+    color: colors.text.secondary,
+    fontSize: fontSize.md,
+    marginBottom: spacing.md,
+    marginLeft: spacing.sm,
   },
 });
 

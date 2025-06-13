@@ -13,10 +13,11 @@ import { QueryKeyGenerator } from '../lib/QueryKeyGenerator';
  * @see getTodos API 함수를 사용하여 데이터를 가져옵니다.
  * @see QueryKeyGenerator.allTodos()를 쿼리 키로 사용합니다.
  */
-export const useGetTodos = () => {
+export const useGetTodos = (args: {uid: string}) => {
+  const {uid} = args;
   return useQuery<Todo[], Error>({
     queryKey: QueryKeyGenerator.allTodos(), // 모든 Todo 목록에 대한 고유 쿼리 키
-    queryFn: getTodos, // 데이터를 가져올 API 함수
+    queryFn: () => (getTodos({uid})), // 데이터를 가져올 API 함수
   });
 };
 
