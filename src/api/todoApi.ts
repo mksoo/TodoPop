@@ -103,7 +103,7 @@ export const getTodoById = async (args: { id: string }): Promise<Todo> => {
 export const updateTodo = async (args: { id: string, updates: Partial<Omit<Todo, 'id' | 'createdAt'>> }): Promise<void> => {
   const { id, updates } = args;
   try {
-    const docRef = doc(db, 'todos', id);
+    const docRef = doc(todosCollection, id);
     await updateDoc(docRef, updates); // 제공된 updates 객체로 문서 업데이트
   } catch (error) {
     console.error("Error updating document in todoApi: ", error);
@@ -122,7 +122,7 @@ export const updateTodo = async (args: { id: string, updates: Partial<Omit<Todo,
 export const deleteTodo = async (args: { id: string }): Promise<void> => {
   const { id } = args;
   try {
-    const docRef = doc(db, 'todos', id);
+    const docRef = doc(todosCollection, id);
     await deleteDoc(docRef); // 문서 삭제
   } catch (error) {
     console.error("Error deleting document in todoApi: ", error);
