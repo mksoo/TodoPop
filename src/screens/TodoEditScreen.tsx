@@ -95,9 +95,9 @@ const TodoEditScreen: React.FC = () => {
           }
           color={
             todo.status === 'COMPLETED'
-            ? colors.primary
+            ? colors.success
             : todo.status === 'ONGOING'
-            ? colors.secondary
+            ? colors.primary
             : colors.danger
           }
           textColor={colors.grayscale[100]}
