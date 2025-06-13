@@ -83,7 +83,11 @@ class TodosService {
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      const todos = await this.getOverdueTodosByCursor({limit: 100, lastDoc});
+      const todos: admin.firestore.DocumentSnapshot[] =
+        await this.getOverdueTodosByCursor({
+          limit: 100,
+          lastDoc,
+        });
 
       if (todos.length === 0) {
         console.log("더 이상 처리할 투두가 없습니다.");
@@ -93,7 +97,7 @@ class TodosService {
       lastDoc = todos[todos.length - 1];
 
       const batch = admin.firestore().batch();
-      todos.forEach((doc) => {
+      todos.forEach((doc: admin.firestore.DocumentSnapshot) => {
         batch.update(doc.ref, {status: "FAILED"});
       });
       await batch.commit();
