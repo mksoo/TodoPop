@@ -7,7 +7,6 @@ import TodoItem from '../components/TodoItem';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MainStackParamList } from '../navigation/AppNavigator';
-import { shouldShowTodo } from '../utils/repeatUtils';
 import { Timestamp } from '@react-native-firebase/firestore';
 import { colors, spacing, fontSize, borderRadius } from '../styles';
 import auth from '@react-native-firebase/auth';
@@ -19,8 +18,8 @@ const TodoListScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList, 'TodoList'>>();
 
   const { data: todos, isLoading: isTodosLoading, isError: todosError, error } = useGetTodos();
-  const { mutate: addTodoMutate } = useAddTodo();
-  const { currentUser, isLoading: isAuthLoading } = useAuth();
+  const { mutateAsync: addTodoMutate } = useAddTodo();
+  const { currentUser } = useAuth();
 
   const handleLogout = useCallback(async () => {
     try {
@@ -58,15 +57,6 @@ const TodoListScreen: React.FC = () => {
     });
     setNewTodoTitle('');
   }, [newTodoTitle, addTodoMutate]);
-  
-  const visibleTodos = useMemo(() => {
-    if (!todos) return [];
-    return todos.filter(todo => shouldShowTodo({
-      status: todo.status,
-      nextOccurrence: todo.nextOccurrence,
-      repeatSettings: todo.repeatSettings,
-    }));
-  }, [todos]);
 
   const renderItem = useCallback(({ item }: { item: Todo }) => {
     return (
@@ -91,7 +81,7 @@ const TodoListScreen: React.FC = () => {
         <Button title="추가" onPress={handleAdd} color={colors.primary} />
       </View>
       <FlatList
-        data={visibleTodos}
+        data={todos}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContentContainer}

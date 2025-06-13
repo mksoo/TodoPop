@@ -197,24 +197,3 @@ export const calculateNextOccurrence = (
   // 최종 계산된 Dayjs 객체를 Firestore Timestamp로 변환하여 반환
   return Timestamp.fromDate(nextDateDayjs.toDate());
 };
-
-/**
- * 주어진 할 일이 현재 목록에 표시되어야 하는지 여부를 결정합니다.
- *
- * @param todo 확인할 할 일 객체. `TypeShowableTodo` 인터페이스와 status, repeatSettings를 포함할 수 있는 객체를 따릅니다.
- * @returns 할 일이 표시되어야 하면 true, 그렇지 않으면 false.
- */
-export const shouldShowTodo = (todo: TypeShowableTodo & { repeatSettings?: RepeatSettings, status?: string }): boolean => {
-  // nextOccurrence가 없는 경우:
-  //   - 반복 설정(repeatSettings)이 없으면 일반 할 일이므로 항상 표시 (또는 마감일 기준 다른 로직 적용 가능).
-  //   - 반복 설정이 있는데 nextOccurrence가 없으면 반복이 종료된 것으로 간주하여 숨김.
-  if (!todo.nextOccurrence) {
-    if(!todo.repeatSettings) return true; // 반복 없는 일반 Todo는 일단 표시
-    return false; // 반복 설정이 있는데 nextOccurrence 없으면 (종료된 것으로 간주) 숨김.
-  }
-
-  // nextOccurrence가 오늘이거나 과거인 경우 표시 (시간은 무시하고 날짜만 비교)
-  const now = dayjs();
-  const nextOccurrenceDate = dayjs(todo.nextOccurrence.toDate());
-  return nextOccurrenceDate.startOf('day').isSameOrBefore(now.startOf('day'));
-}; 
