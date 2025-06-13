@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native'; // NavigationProp, Par
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'; // NativeStackNavigationProp import
 import { MainStackParamList } from '../navigation/AppNavigator'; // MainStackParamList import
 import { colors, spacing, fontSize, borderRadius } from '../styles';
+import Badge from './Badge';
 
 interface TodoItemProps {
   item: Todo;
@@ -53,6 +54,23 @@ const TodoItem: React.FC<TodoItemProps> = React.memo(({
         <Text style={[styles.todoTitle, item.status === 'COMPLETED' && styles.completedTodo]}>
           {item.title}
         </Text>
+        <Badge
+          label={
+            item.status === 'COMPLETED'
+              ? '완료됨'
+              : item.status === 'ONGOING'
+              ? '진행중'
+              : '실패'
+          }
+          color={
+            item.status === 'COMPLETED'
+              ? colors.success
+              : item.status === 'ONGOING'
+              ? colors.primary
+              : colors.danger
+          }
+          textColor={colors.grayscale[100]}
+        />
       </View>
       <Button title="삭제" onPress={handleDeleteCb} color="red" />
     </TouchableOpacity>
@@ -103,6 +121,11 @@ const styles = StyleSheet.create({
     color: colors.background.primary,
     fontSize: fontSize.md,
     fontWeight: 'bold',
+  },
+  statusText: {
+    fontSize: fontSize.sm,
+    color: colors.text.secondary,
+    marginTop: 2,
   },
 });
 

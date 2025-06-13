@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import { getAuth, onAuthStateChanged, FirebaseAuthTypes } from '@react-native-firebase/auth';
 
 // --- [1] 컨텍스트에서 제공할 데이터의 타입 정의 ---
 // AuthContext가 어떤 종류의 데이터를 하위 컴포넌트들에게 전달할지 정의하는 인터페이스입니다.
@@ -43,20 +43,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // 여기서는 Firebase의 onAuthStateChanged 리스너를 설정하여,
   // 사용자의 로그인 또는 로그아웃 상태가 변경될 때마다 콜백 함수가 실행되도록 합니다.
   useEffect(() => {
-    // onAuthStateChanged는 사용자 객체(user)를 인자로 받는 콜백 함수를 등록합니다.
-    // 사용자가 로그인하면 user 객체가 전달되고, 로그아웃하면 null이 전달됩니다.
-    const subscriber = auth().onAuthStateChanged(user => {
-      setCurrentUser(user); // currentUser 상태 업데이트
-      if (isLoading) { // 최초 상태 확인 시 (isLoading이 true일 때)
-        setIsLoading(false); // 로딩 완료 상태로 변경
+    const unsubscribe = onAuthStateChanged(getAuth(), user => {
+      setCurrentUser(user);
+      if (isLoading) {
+        setIsLoading(false);
       }
     });
-
-    // useEffect에서 반환하는 함수는 컴포넌트가 언마운트될 때 (화면에서 사라질 때) 실행됩니다.
-    // 여기서는 onAuthStateChanged 리스너를 구독 해제하여 메모리 누수를 방지합니다.
-    return subscriber;
-  }, [isLoading]); // 의존성 배열에 isLoading을 넣어, isLoading 상태가 변경될 때도 이 effect가 관리되도록 합니다.
-                   // 주된 목적은 초기 로딩 상태를 정확히 반영하고, 불필요한 재구독을 방지하는 것입니다.
+    return unsubscribe;
+  }, [isLoading]);
 
   // --- [4c] 컨텍스트 Provider를 통해 상태 값 제공 ---
   // AuthContext.Provider는 value prop을 통해 하위 컴포넌트들에게 currentUser와 isLoading 값을 전달합니다.

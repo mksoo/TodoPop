@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { addTodo, updateTodo, getTodoById, deleteTodo } from '../api/todoApi';
-import { Todo, RepeatSettings } from '../types/todo.types';
+import { Todo } from '../types/todo.types';
 import { QueryKeyGenerator } from '../lib/QueryKeyGenerator';
 import { calculateNextOccurrence } from '../utils/repeatUtils';
-import firestore, { FirebaseFirestoreTypes, Timestamp } from '@react-native-firebase/firestore';
+import { Timestamp } from '@react-native-firebase/firestore';
 
 /**
  * 새로운 할 일(Todo)을 추가하는 React Query 뮤테이션 훅입니다.
@@ -17,13 +17,14 @@ import firestore, { FirebaseFirestoreTypes, Timestamp } from '@react-native-fire
  * @see addTodo API 함수를 사용하여 데이터를 추가합니다.
  * @see 성공 시 `QueryKeyGenerator.allTodos()` 쿼리를 무효화하여 목록을 새로고침합니다.
  */
-export const useAddTodo = () => {
+export const useAddTodo = (args: {uid: string}) => {
+  const {uid} = args;
   const queryClient = useQueryClient();
   return useMutation<string, Error, Omit<Todo, 'id' | 'createdAt' | 'status'> & { title: string }>({
     mutationFn: async (newTodoData) => {
       // newTodoData에는 title이 필수로 포함되며, nextOccurrence, dueDate, repeatSettings 등이 포함될 수 있습니다.
       // API의 addTodo 함수에서 nextOccurrence가 없으면 현재 시간으로, status는 'ONGOING'으로 자동 설정됩니다.
-      return addTodo({ todo: newTodoData });
+      return addTodo({ todo: newTodoData, uid });
     },
     onSuccess: () => {
       // 할 일 추가 성공 시, 전체 할 일 목록 캐시를 무효화하여 최신 데이터를 다시 가져오도록 합니다.

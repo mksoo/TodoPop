@@ -7,9 +7,9 @@ import {
   updateDoc,
   deleteDoc,
   query,
-  where,
   orderBy,
-  serverTimestamp // FieldValue 대신 serverTimestamp 직접 import
+  serverTimestamp, // FieldValue 대신 serverTimestamp 직접 import
+  where
 } from '@react-native-firebase/firestore';
 import { plainToTodo } from '../types/adapters/PlainToTodo';
 
@@ -25,8 +25,8 @@ import { Todo } from '../types/todo.types';
  * @returns 생성된 Firestore 문서의 ID.
  * @throws Firestore 작업 중 오류 발생 시 해당 오류를 throw합니다.
  */
-export const addTodo = async (args: { todo: Omit<Todo, 'id' | 'createdAt' | 'status'> & { title: string } }): Promise<string> => {
-  const { todo } = args;
+export const addTodo = async (args: { todo: Omit<Todo, 'id' | 'createdAt' | 'status'> & { title: string }, uid: string }): Promise<string> => {
+  const { todo, uid } = args;
   try {
     const todoDataWithTimestamp = {
       ...todo,
@@ -35,6 +35,7 @@ export const addTodo = async (args: { todo: Omit<Todo, 'id' | 'createdAt' | 'sta
       nextOccurrence: todo.nextOccurrence || Timestamp.now(),
       status: 'ONGOING', // 새로운 Todo는 항상 'ONGOING' 상태로 시작
       createdAt: serverTimestamp(), // 서버 타임스탬프 사용
+      uid,
     };
     const docRef = await addDoc(todosCollection, todoDataWithTimestamp);
     return docRef.id;
@@ -50,11 +51,12 @@ export const addTodo = async (args: { todo: Omit<Todo, 'id' | 'createdAt' | 'sta
  * @returns `Todo` 객체의 배열.
  * @throws Firestore 작업 중 오류 발생 시 해당 오류를 throw합니다.
  */
-export const getTodos = async (): Promise<Todo[]> => {
+export const getTodos = async (args: { uid: string }): Promise<Todo[]> => {
+  const { uid } = args;
   try {
-    const q = query(
-      todosCollection, 
-      where('status', '==', 'ONGOING'),
+    let q = query(
+      todosCollection,
+      where('uid', '==', uid),
       orderBy('createdAt', 'desc')
     );
 
@@ -78,7 +80,7 @@ export const getTodos = async (): Promise<Todo[]> => {
  */
 export const getTodoById = async (args: { id: string }): Promise<Todo> => {
   const { id } = args;
-  const docRef = doc(db, 'todos', id); // db 참조, 컬렉션 이름, 문서 ID로 문서 참조 생성
+  const docRef = doc(todosCollection, id); // db 참조, 컬렉션 이름, 문서 ID로 문서 참조 생성
   const docSnap = await getDoc(docRef);
 
   if (!docSnap.exists()) {
@@ -101,7 +103,7 @@ export const getTodoById = async (args: { id: string }): Promise<Todo> => {
 export const updateTodo = async (args: { id: string, updates: Partial<Omit<Todo, 'id' | 'createdAt'>> }): Promise<void> => {
   const { id, updates } = args;
   try {
-    const docRef = doc(db, 'todos', id);
+    const docRef = doc(todosCollection, id);
     await updateDoc(docRef, updates); // 제공된 updates 객체로 문서 업데이트
   } catch (error) {
     console.error("Error updating document in todoApi: ", error);
@@ -120,7 +122,7 @@ export const updateTodo = async (args: { id: string, updates: Partial<Omit<Todo,
 export const deleteTodo = async (args: { id: string }): Promise<void> => {
   const { id } = args;
   try {
-    const docRef = doc(db, 'todos', id);
+    const docRef = doc(todosCollection, id);
     await deleteDoc(docRef); // 문서 삭제
   } catch (error) {
     console.error("Error deleting document in todoApi: ", error);
