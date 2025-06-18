@@ -30,5 +30,6 @@ module.exports = {
     "indent": ["error", 2],
     "require-jsdoc": "off",
     "valid-jsdoc": "off",
+    "max-len": "off",
   },
 };
