@@ -5,12 +5,11 @@ export const plainToTodo = (data: PlainObject): Todo => {
   return {
     id: data.id,
     title: data.title,
-    completed: data.completed,
-    failed: data.failed,
+    completedAt: data.completedAt,
     status: data.status,
     createdAt: data.createdAt,
     dueDate: data.dueDate,
-    repeat: data.repeat,
-    googleCalendarEventId: data.googleCalendarEventId,
+    repeatSettings: data.repeatSettings,
+    calendarEventId: data.calendarEventId,
   }
 }

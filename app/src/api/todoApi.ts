@@ -21,7 +21,6 @@ import { Todo } from '../types/todo.types';
  * 
  * @param args 함수 인자 객체
  * @param args.todo 추가할 할 일 데이터. `id`, `createdAt`, `status` 필드는 서버에서 자동 생성/설정되므로 제외합니다.
- *                  `title`은 필수이며, `nextOccurrence`가 제공되지 않으면 현재 시간으로 기본 설정됩니다.
  * @returns 생성된 Firestore 문서의 ID.
  * @throws Firestore 작업 중 오류 발생 시 해당 오류를 throw합니다.
  */
@@ -30,9 +29,6 @@ export const addTodo = async (args: { todo: Omit<Todo, 'id' | 'createdAt' | 'sta
   try {
     const todoDataWithTimestamp = {
       ...todo,
-      // nextOccurrence가 없으면 현재 시간으로 설정 (반복 없는 일반 Todo 또는 첫 반복 생성 시).
-      // 반복 Todo의 경우, 호출하는 쪽 (예: useAddTodo 훅)에서 계산된 첫 nextOccurrence를 전달할 수 있음.
-      nextOccurrence: todo.nextOccurrence || Timestamp.now(),
       status: 'ONGOING', // 새로운 Todo는 항상 'ONGOING' 상태로 시작
       createdAt: serverTimestamp(), // 서버 타임스탬프 사용
       uid,

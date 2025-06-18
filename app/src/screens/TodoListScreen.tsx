@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, Text, FlatList, Button, TextInput, StyleSheet, Alert, Image, TouchableOpacity, ActivityIndicator, SectionList } from 'react-native';
-import { Todo, RepeatSettings } from '../types/todo.types';
 import { useGetTodos } from '../hooks/useTodosQueries';
 import { useAddTodo } from '../hooks/useTodosMutations';
 import TodoItem from '../components/TodoItem';
@@ -55,7 +54,6 @@ const TodoListScreen: React.FC = () => {
     if (!newTodoTitle.trim()) return;
     addTodoMutate({ 
       title: newTodoTitle, 
-      nextOccurrence: Timestamp.now(),
     });
     setNewTodoTitle('');
   }, [newTodoTitle, addTodoMutate]);
