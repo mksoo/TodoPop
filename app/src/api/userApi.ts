@@ -1,7 +1,7 @@
 import { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { collection, Timestamp } from '@react-native-firebase/firestore';
 import { FirestoreUser } from '../types/user.types';
-import { db } from '../lib/firebase';
+import { db } from '@/lib/firebase';
 
 // --- [새로운 코드] users 컬렉션 참조 ---
 // 'users' 컬렉션에 대한 참조입니다.
