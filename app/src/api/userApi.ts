@@ -1,7 +1,13 @@
 import { FirebaseAuthTypes } from '@react-native-firebase/auth';
-import { Timestamp } from '@react-native-firebase/firestore';
-import { usersCollection } from '../lib/firebase';
+import { collection, Timestamp } from '@react-native-firebase/firestore';
 import { FirestoreUser } from '../types/user.types';
+import { db } from '../lib/firebase';
+
+// --- [새로운 코드] users 컬렉션 참조 ---
+// 'users' 컬렉션에 대한 참조입니다.
+// 이 컬렉션에는 사용자 정보를 담은 문서들이 저장됩니다.
+// 문서 ID는 Firebase Authentication의 사용자 UID (user.uid)를 사용하는 것이 일반적입니다.
+export const usersCollection = collection(db, 'Users');
 
 interface CheckAndCreateUserResult {
   isNewUser: boolean;
