@@ -1,16 +1,16 @@
 import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch, Button } from 'react-native';
-import { Todo } from '../types/todo.types';
-// import { useGetTodo } from '../hooks/useTodosQueries'; // TodoItem에서는 직접 사용하지 않음
-import { useUpdateTodoStatus, useDeleteTodo } from '../hooks/useTodosMutations';
+import { useDeleteTodo } from '../hooks/useTodosMutations';
+import { useDeleteTodoInstance, useUpdateTodoInstanceStatus } from '../hooks/useTodoInstancesMutations';
 import { useNavigation } from '@react-navigation/native'; // NavigationProp, ParamListBase 제거 가능
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'; // NativeStackNavigationProp import
 import { MainStackParamList } from '../navigation/AppNavigator'; // MainStackParamList import
 import { colors, spacing, fontSize, borderRadius } from '../styles';
 import Badge from './Badge';
+import { TodoInstance } from '@/types/todoInstance.types';
 
 interface TodoItemProps {
-  item: Todo;
+  item: TodoInstance;
 }
 
 const TodoItem: React.FC<TodoItemProps> = React.memo(({
@@ -18,17 +18,21 @@ const TodoItem: React.FC<TodoItemProps> = React.memo(({
 }) => {
   const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>(); 
 
-  const { mutateAsync: updateTodoStatus } = useUpdateTodoStatus();
-  const { mutateAsync: deleteTodo } = useDeleteTodo();
+  const { mutateAsync: updateTodoInstanceStatus } = useUpdateTodoInstanceStatus();
+  // const { mutateAsync: deleteTodo } = useDeleteTodo();
+  const { mutateAsync: deleteTodoInstance } = useDeleteTodoInstance();
 
   const handleToggleStatusCb = useCallback(async () => {
     const newStatus = item.status === 'COMPLETED' ? 'ONGOING' : 'COMPLETED';
-    await updateTodoStatus({ id: item.id, status: newStatus });
-  }, [updateTodoStatus, item.id, item.status]);
+    await updateTodoInstanceStatus({ id: item.id, status: newStatus });
+  }, [updateTodoInstanceStatus, item.id, item.status]);
 
-  const handleDeleteCb = useCallback(async () => {
-    await deleteTodo({ id: item.id });
-  }, [deleteTodo, item.id]);
+  // const handleDeleteCb = useCallback(async () => {
+  //   await deleteTodo({ id: item.id });
+  // }, [deleteTodo, item.id]);
+  const handleDeleteInstanceCb = useCallback(async () => {
+    await deleteTodoInstance({ id: item.id });
+  }, [deleteTodoInstance, item.id]);
 
   const handleNavigateToEdit = () => {
     navigation.navigate('TodoEdit', { todoId: item.id });
@@ -72,7 +76,7 @@ const TodoItem: React.FC<TodoItemProps> = React.memo(({
           textColor={colors.grayscale[100]}
         />
       </View>
-      <Button title="삭제" onPress={handleDeleteCb} color="red" />
+      <Button title="삭제" onPress={handleDeleteInstanceCb} color="red" />
     </TouchableOpacity>
   );
 });

@@ -1,16 +1,15 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, Text, FlatList, Button, TextInput, StyleSheet, Alert, Image, TouchableOpacity, ActivityIndicator, SectionList } from 'react-native';
-import { useGetTodos } from '../hooks/useTodosQueries';
 import { useAddTodo } from '../hooks/useTodosMutations';
 import TodoItem from '../components/TodoItem';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MainStackParamList } from '../navigation/AppNavigator';
-import { Timestamp } from '@react-native-firebase/firestore';
 import { colors, spacing, fontSize, borderRadius } from '../styles';
 import auth from '@react-native-firebase/auth';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { useAuth } from '../contexts/AuthContext';
+import { useGetTodoInstances } from '@/hooks/useTodoInstancesQueries';
 
 const TodoListScreen: React.FC = () => {
   const [newTodoTitle, setNewTodoTitle] = useState('');
@@ -19,7 +18,7 @@ const TodoListScreen: React.FC = () => {
 
   const { currentUser } = useAuth();
 
-  const { data: todos, isLoading: isTodosLoading, isError: todosError, error } = useGetTodos({uid: currentUser?.uid ?? ''});
+  const { data: todoInstances, isLoading: isTodoInstancesLoading, isError: todoInstancesError, error } = useGetTodoInstances({uid: currentUser?.uid ?? ''});
   const { mutateAsync: addTodoMutate } = useAddTodo({uid: currentUser?.uid ?? ''});
 
   const handleLogout = useCallback(async () => {
@@ -54,6 +53,7 @@ const TodoListScreen: React.FC = () => {
     if (!newTodoTitle.trim()) return;
     addTodoMutate({ 
       title: newTodoTitle, 
+      isActive: true,
     });
     setNewTodoTitle('');
   }, [newTodoTitle, addTodoMutate]);
@@ -65,27 +65,27 @@ const TodoListScreen: React.FC = () => {
     }));
   }, []);
 
-  if (isTodosLoading) return <Text style={styles.loadingText}>로딩 중...</Text>;
-  if (todosError || error) return <Text style={[styles.errorText, {color: colors.danger}]}>할 일 목록을 불러오는 중 오류가 발생했습니다: {error?.message || '알 수 없는 오류'}</Text>;
+  if (isTodoInstancesLoading) return <Text style={styles.loadingText}>로딩 중...</Text>;
+  if (todoInstancesError || error) return <Text style={[styles.errorText, {color: colors.danger}]}>할 일 목록을 불러오는 중 오류가 발생했습니다: {error?.message || '알 수 없는 오류'}</Text>;
 
-  const ongoingTodos = todos?.filter(todo => todo.status === 'ONGOING') || [];
-  const completedTodos = todos?.filter(todo => todo.status === 'COMPLETED') || [];
-  const failedTodos = todos?.filter(todo => todo.status === 'FAILED') || [];
+  const ongoingTodoInstances = todoInstances?.filter(todoInstance => todoInstance.status === 'ONGOING') || [];
+  const completedTodoInstances = todoInstances?.filter(todoInstance => todoInstance.status === 'COMPLETED') || [];
+  const failedTodoInstances = todoInstances?.filter(todoInstance => todoInstance.status === 'FAILED') || [];
 
   const sections = [
     {
       title: '진행중',
-      data: ongoingTodos,
+      data: ongoingTodoInstances,
       emptyText: '할 일이 없습니다.',
     },
     {
       title: '완료됨',
-      data: completedTodos,
+      data: completedTodoInstances,
       emptyText: '완료된 할 일이 없습니다.',
     },
     {
       title: '실패',
-      data: failedTodos,
+      data: failedTodoInstances,
       emptyText: '실패한 할 일이 없습니다.',
     },
   ];

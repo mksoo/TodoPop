@@ -63,7 +63,7 @@ export const getTodoInstances = async (args: {
     if (args.uid) {
       q = query(q, where('uid', '==', args.uid));
     }
-    q = query(q, orderBy('instanceDate', 'asc'));
+    q = query(q, orderBy('instanceDate', 'desc'));
 
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => plainToTodoInstance({ id: doc.id, ...doc.data() }));
@@ -76,7 +76,8 @@ export const getTodoInstances = async (args: {
 /**
  * 특정 ID의 TodoInstance를 가져옵니다.
  */
-export const getTodoInstanceById = async (id: string): Promise<TodoInstance> => {
+export const getTodoInstanceById = async (args: { id: string }): Promise<TodoInstance> => {
+  const { id } = args;
   try {
     const docRef = doc(todoInstancesCollection, id);
     const docSnap = await getDoc(docRef);

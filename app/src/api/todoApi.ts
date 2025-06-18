@@ -31,12 +31,12 @@ const todosCollection = collection(db, 'Todos');
  * @returns 생성된 Firestore 문서의 ID.
  * @throws Firestore 작업 중 오류 발생 시 해당 오류를 throw합니다.
  */
-export const addTodo = async (args: { todo: Omit<Todo, 'id' | 'createdAt' | 'status'> & { title: string }, uid: string }): Promise<string> => {
+export const addTodo = async (args: { todo: Omit<Todo, 'id' | 'createdAt' | 'isActive' | 'lastGeneratedDate'> & { title: string }, uid: string }): Promise<string> => {
   const { todo, uid } = args;
   try {
     const todoDataWithTimestamp = {
       ...todo,
-      status: 'ONGOING', // 새로운 Todo는 항상 'ONGOING' 상태로 시작
+      isActive: true, // 새로운 Todo는 항상 활성화 상태로 시작
       createdAt: serverTimestamp(), // 서버 타임스탬프 사용
       uid,
     };

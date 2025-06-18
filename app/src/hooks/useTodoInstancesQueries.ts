@@ -21,7 +21,7 @@ export const useGetTodoInstances = (args: {
 export const useGetTodoInstanceById = (id: string) => {
   return useQuery<TodoInstance, Error>({
     queryKey: QueryKeyGenerator.todoInstanceById({ id }),
-    queryFn: () => getTodoInstanceById(id),
+    queryFn: () => getTodoInstanceById({id}),
     enabled: !!id,
   });
 }; 
