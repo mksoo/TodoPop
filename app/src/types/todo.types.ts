@@ -69,4 +69,8 @@ export interface Todo {
   /** 활성 상태 */
   isActive: boolean;
   // 여기에 추가적인 필드를 정의할 수 있습니다. (예: priority, tags 등)
+  /** 시작일 */
+  startAt: FirebaseFirestoreTypes.Timestamp;
+  /** 마감일 */
+  dueAt: FirebaseFirestoreTypes.Timestamp;
 }

@@ -12,6 +12,5 @@ export interface TodoInstance {
   templateId: string;
   instanceDate: FirebaseFirestoreTypes.Timestamp;
   tags?: string[];
-  calendarEventId?: string;
 }
 
