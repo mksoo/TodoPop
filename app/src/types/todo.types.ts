@@ -1,14 +1,6 @@
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
 /**
- * 할 일의 완료 상태를 나타내는 타입입니다.
- * - ONGOING: 진행 중
- * - COMPLETED: 완료됨
- * - FAILED: 실패
- */
-export type TodoStatus = 'ONGOING' | 'COMPLETED' | 'FAILED';
-
-/**
  * 할 일의 반복 빈도를 나타내는 타입입니다.
  * - daily: 매일
  * - weekly: 매주
@@ -29,6 +21,8 @@ export interface RepeatSettings {
   daysOfMonth?: number[];
   /** 사용자 정의 반복 시 간격 (예: frequency가 'custom'이고 interval이 2면 2일마다 또는 2주마다 등) */
   interval?: number; 
+  /** 반복 시작일 */
+  startDate: FirebaseFirestoreTypes.Timestamp;
   /** 반복 종료일 (선택 사항) */
   endDate?: FirebaseFirestoreTypes.Timestamp | null;
   /** 
@@ -49,14 +43,14 @@ export interface Todo {
   title: string; 
   /** 할 일 내용 (선택 사항) */
   description?: string; 
-  /** 할 일 상태 (ONGOING, COMPLETED, PENDING) */
-  status: TodoStatus;
+  /** 성공한 날짜들 (선택 사항) */
+  successDates?: FirebaseFirestoreTypes.Timestamp[];
   /** 생성일 */
   createdAt: FirebaseFirestoreTypes.Timestamp;
-  /** 완료일 (선택 사항) */
-  completedAt?: FirebaseFirestoreTypes.Timestamp | null;
-  /** 마감일 (선택 사항) */
-  dueDate?: FirebaseFirestoreTypes.Timestamp | null; 
+  /** 시작일 */
+  startAt: FirebaseFirestoreTypes.Timestamp;
+  /** 마감일 */
+  dueAt: FirebaseFirestoreTypes.Timestamp;
   /** 
    * 반복 설정 (선택 사항).
    * 이 설정이 존재하면 해당 Todo는 반복되는 항목으로 간주됩니다.
@@ -66,25 +60,5 @@ export interface Todo {
   tags?: string[];
   /** 캘린더 이벤트 Id(구글 캘린더 연동용) (선택 사항) */
   calendarEventId?: string;
-  /** 
-   * 다음 발생 예정일 (타임스탬프 또는 null).
-   * 반복되지 않는 일반 Todo의 경우 생성 시점 또는 마감일로 설정될 수 있습니다.
-   * 반복 Todo의 경우, 이 날짜가 되어야 목록에 표시됩니다.
-   * 반복이 종료되었거나, 일반 Todo가 완료되면 null이 될 수 있습니다.
-   */
-  nextOccurrence?: FirebaseFirestoreTypes.Timestamp | null;
   // 여기에 추가적인 필드를 정의할 수 있습니다. (예: priority, tags 등)
-}
-
-/**
- * `calculateNextOccurrence` 함수에 전달되는 Todo 객체의 필수 필드를 정의하는 인터페이스입니다.
- * `Todo` 인터페이스의 부분 집합으로, 다음 반복일 계산에 필요한 최소한의 정보를 포함합니다.
- */
-export interface CalculableTodoForNext {
-  dueDate?: FirebaseFirestoreTypes.Timestamp | null;
-  repeatSettings?: RepeatSettings;
-  /** 다음 반복일 계산 로직에서 현재의 nextOccurrence 값도 참고할 수 있도록 추가 */
-  nextOccurrence?: FirebaseFirestoreTypes.Timestamp | null; 
-  /** 계산의 기준이 되는 날짜 (예: 현재 Todo의 완료 시점 또는 특정 참조일) */
-  referenceDate: FirebaseFirestoreTypes.Timestamp;
 }
