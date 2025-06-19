@@ -5,12 +5,15 @@ import TodoEditScreen from '../screens/TodoEditScreen'; // TodoEditScreen import
 import LoginScreen from '../screens/LoginScreen'; // LoginScreen import
 import { ActivityIndicator, View, StyleSheet } from 'react-native'; // 로딩 인디케이터
 import { useAuth } from '../contexts/AuthContext'; // AuthContext로부터 인증 상태를 가져오기 위한 훅
+import { colors } from '@/styles';
+import CalendarScreen from '@/screens/CalendarScreen';
 
 // --- 네비게이션 스택별 파라미터 타입 정의 --- 
 // MainStack (로그인 후 사용되는 주요 기능 화면들)의 각 화면이 받을 수 있는 파라미터를 정의합니다.
 export type MainStackParamList = {
   TodoList: undefined; // TodoList 화면은 파라미터를 받지 않습니다.
   TodoEdit: { todoId: string }; // TodoEdit 화면은 todoId 문자열을 파라미터로 받습니다.
+  Calendar: undefined; // Calendar 화면은 파라미터를 받지 않습니다.
 };
 
 // AuthStack (로그인 전 사용되는 인증 관련 화면들)의 각 화면이 받을 수 있는 파라미터를 정의합니다.
@@ -34,7 +37,7 @@ const AppNavigator: React.FC = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -42,7 +45,12 @@ const AppNavigator: React.FC = () => {
   // 로딩이 완료된 후, currentUser 값에 따라 다른 네비게이션 스택을 렌더링합니다.
   return currentUser ? (
     // currentUser가 존재하면 (로그인 상태이면) MainStack을 렌더링합니다.
-    <MainStack.Navigator initialRouteName="TodoList">
+    <MainStack.Navigator initialRouteName="Calendar">
+      <MainStack.Screen 
+        name="Calendar"
+        component={CalendarScreen}
+        options={{ headerShown: false }}
+      />
       <MainStack.Screen 
         name="TodoList" 
         component={TodoListScreen} 
