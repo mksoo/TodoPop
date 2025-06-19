@@ -88,12 +88,3 @@ export interface CalculableTodoForNext {
   /** 계산의 기준이 되는 날짜 (예: 현재 Todo의 완료 시점 또는 특정 참조일) */
   referenceDate: FirebaseFirestoreTypes.Timestamp;
 }
-
-/**
- * `shouldShowTodo` 함수에 전달되는 Todo 객체의 필수 필드를 정의하는 인터페이스입니다.
- * `Todo` 인터페이스의 부분 집합으로, 할 일 표시 여부 결정에 필요한 최소한의 정보를 포함합니다.
- */
-export interface ShowableTodo {
-  nextOccurrence?: FirebaseFirestoreTypes.Timestamp | null;
-  // status?: TodoStatus; // 현재 shouldShowTodo는 nextOccurrence만을 기준으로 함
-} 
