@@ -15,6 +15,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const TodoListScreen: React.FC = () => {
   const [newTodoTitle, setNewTodoTitle] = useState('');
+  const [collapsedSections, setCollapsedSections] = useState<{[key: string]: boolean}>({});
   const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList, 'TodoList'>>();
 
   const { currentUser } = useAuth();
@@ -59,10 +60,11 @@ const TodoListScreen: React.FC = () => {
     setNewTodoTitle('');
   }, [newTodoTitle, addTodoMutate]);
 
-  const renderItem = useCallback(({ item }: { item: Todo }) => {
-    return (
-      <TodoItem item={item} />
-    );
+  const toggleSection = useCallback((sectionTitle: string) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [sectionTitle]: !prev[sectionTitle]
+    }));
   }, []);
 
   if (isTodosLoading) return <Text style={styles.loadingText}>로딩 중...</Text>;
@@ -107,11 +109,20 @@ const TodoListScreen: React.FC = () => {
         sections={sections}
         keyExtractor={(item) => item.id}
         renderSectionHeader={({ section }) => (
-          <Text style={styles.sectionTitle}>{section.title}</Text>
+          <TouchableOpacity 
+            onPress={() => toggleSection(section.title)}
+            style={styles.sectionHeader}
+          >
+            <Text style={styles.sectionTitle}>
+              {section.title} {collapsedSections[section.title] ? '▼' : '▲'}
+            </Text>
+          </TouchableOpacity>
         )}
-        renderItem={({ item }) => <TodoItem item={item} />}
+        renderItem={({ item, section }) => 
+          collapsedSections[section.title] ? null : <TodoItem item={item} />
+        }
         renderSectionFooter={({ section }) =>
-          section.data.length === 0 ? (
+          !collapsedSections[section.title] && section.data.length === 0 ? (
             <Text style={styles.emptyText}>{section.emptyText}</Text>
           ) : null
         }
@@ -174,6 +185,10 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 15,
     marginRight: spacing.md,
+  },
+  sectionHeader: {
+    backgroundColor: colors.background.primary,
+    paddingVertical: spacing.sm,
   },
   sectionTitle: {
     fontSize: fontSize.lg,
