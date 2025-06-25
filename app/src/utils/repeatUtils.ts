@@ -1,20 +1,5 @@
-import {
-  // Todo, // Not directly used as CalculableTodoForNext is more specific
-  // RepeatSettings, // Part of CalculableTodoForNext
-  // RepeatFrequency, // Part of RepeatSettings
-  CalculableTodoForNext, // Imported from type definitions
-  ShowableTodo as TypeShowableTodo, // Imported from type definitions, aliased to avoid conflict
-  RepeatSettings // RepeatSettings를 직접 가져와서 사용
-} from '../types/todo.types';
-import { FirebaseFirestoreTypes, Timestamp } from '@react-native-firebase/firestore';
+import { Timestamp } from '@react-native-firebase/firestore';
 import dayjs from 'dayjs';
-import customParseFormat from 'dayjs/plugin/customParseFormat';
-import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
-import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'; // isSameOrAfter 플러그인 import
-
-dayjs.extend(customParseFormat);
-dayjs.extend(isSameOrBefore);
-dayjs.extend(isSameOrAfter); // isSameOrAfter 플러그인 사용 설정
 
 /**
  * 할 일의 다음 반복 발생일을 계산합니다.
@@ -27,7 +12,11 @@ dayjs.extend(isSameOrAfter); // isSameOrAfter 플러그인 사용 설정
  * @returns 계산된 다음 발생일의 Timestamp 객체. 반복이 종료되었거나 계산할 수 없으면 null을 반환합니다.
  */
 export const calculateNextOccurrence = (
-  args: CalculableTodoForNext
+  args: {
+    repeatSettings: RepeatSettings;
+    nextOccurrence: Timestamp | null;
+    referenceDate: Timestamp | null;
+  }
 ): Timestamp | null => {
   console.log('Timestamp in calculateNextOccurrence:', Timestamp);
   const { repeatSettings, nextOccurrence, referenceDate } = args;

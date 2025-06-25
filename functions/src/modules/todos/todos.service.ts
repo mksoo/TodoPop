@@ -73,38 +73,6 @@ class TodosService {
 
     return snapshot.docs;
   }
-
-  /**
-   * 마감일이 지난 Todo를 실패 처리합니다.
-   * @return {Promise<void>} 마감일이 지난 Todo를 실패 처리합니다.
-   */
-  async markOverdueTodosFailed(): Promise<void> {
-    let lastDoc: admin.firestore.DocumentSnapshot | null = null;
-
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const todos: admin.firestore.DocumentSnapshot[] =
-        await this.getOverdueTodosByCursor({
-          limit: 100,
-          lastDoc,
-        });
-
-      if (todos.length === 0) {
-        console.log("더 이상 처리할 투두가 없습니다.");
-        break;
-      }
-
-      lastDoc = todos[todos.length - 1];
-
-      const batch = admin.firestore().batch();
-      todos.forEach((doc: admin.firestore.DocumentSnapshot) => {
-        batch.update(doc.ref, {status: "FAILED"});
-      });
-      await batch.commit();
-
-      console.log(`${todos.length}개의 투두를 실패 처리했습니다.`);
-    }
-  }
 }
 
 export default new TodosService();
