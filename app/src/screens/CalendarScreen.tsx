@@ -1,32 +1,41 @@
 import ScreenHeader from '@/components/ScreenHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { useGetTodos } from '@/hooks/useTodosQueries';
 import { colors } from '@/styles';
 import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, SafeAreaView, Text, FlatList } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import dayjs from 'dayjs';
 import TodoItem from '@/components/TodoItem';
+import { useScheduleEntriesQuery } from '@/hooks/useScheduleEntryQueries';
 
 const CalendarScreen = () => {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedMonth, setSelectedMonth] = useState<number>(0);
 
   const { currentUser } = useAuth();
-  const { data: todos } = useGetTodos({ uid: currentUser?.uid ?? '' });
+  const { data: scheduleEntries } = useScheduleEntriesQuery();
 
-  // 날짜별로 dot 표시
   const markedDates = useMemo(() => {
     const marks: Record<string, any> = {};
-    if (todos && Array.isArray(todos)) {
-      todos.forEach(todo => {
-        if (todo.createdAt && typeof todo.createdAt.toDate === 'function') {
-          const dateStr = dayjs(todo.createdAt.toDate()).format('YYYY-MM-DD');
-          marks[dateStr] = marks[dateStr] || { dots: [], marked: true };
-          marks[dateStr].dots = [
-            { key: 'todo', color: colors.primary, selectedDotColor: colors.primary },
-          ];
+    if (scheduleEntries && Array.isArray(scheduleEntries)) {
+      const dateCount: Record<string, number> = {};
+
+      scheduleEntries.forEach(entry => {
+        if (entry.startAt && typeof entry.startAt.toDate === 'function') {
+          const dateStr = dayjs(entry.startAt.toDate()).format('YYYY-MM-DD');
+          dateCount[dateStr] = (dateCount[dateStr] || 0) + 1;
         }
+      });
+
+      Object.entries(dateCount).forEach(([dateStr, count]) => {
+        marks[dateStr] = marks[dateStr] || { dots: [], marked: true };
+        // dot 개수만큼 서로 다른 key로 dot 객체 생성
+        // 최대 5개만 표시
+        marks[dateStr].dots = Array.from({ length: Math.min(count, 5) }).map((_, idx) => ({
+          key: `scheduleEntry${idx}`,
+          color: colors.grayscale[500],
+          selectedDotColor: colors.grayscale[100],
+        }));
       });
     }
     if (selectedDate) {
@@ -37,16 +46,16 @@ const CalendarScreen = () => {
       };
     }
     return marks;
-  }, [todos, selectedDate]);
+  }, [scheduleEntries, selectedDate]);
 
   // 선택한 날짜의 todo만 필터링
   const todosForSelectedDate = useMemo(() => {
-    if (!selectedDate || !todos) return [];
-    return todos.filter(todo => {
-      if (!todo.createdAt || typeof todo.createdAt.toDate !== 'function') return false;
-      return dayjs(todo.createdAt.toDate()).format('YYYY-MM-DD') === selectedDate;
+    if (!selectedDate || !scheduleEntries) return [];
+    return scheduleEntries.filter(todo => {
+      if (!todo.startAt || typeof todo.startAt.toDate !== 'function') return false;
+      return dayjs(todo.startAt.toDate()).format('YYYY-MM-DD') === selectedDate;
     });
-  }, [todos, selectedDate]);
+  }, [scheduleEntries, selectedDate]);
 
   return (
     <SafeAreaView style={styles.container}>
