@@ -32,7 +32,7 @@ export const addTodo = async (args: { todo: Omit<Todo, 'id' | 'createdAt' | 'sta
       ...todo,
       // nextOccurrence가 없으면 현재 시간으로 설정 (반복 없는 일반 Todo 또는 첫 반복 생성 시).
       // 반복 Todo의 경우, 호출하는 쪽 (예: useAddTodo 훅)에서 계산된 첫 nextOccurrence를 전달할 수 있음.
-      nextOccurrence: todo.nextOccurrence || Timestamp.now(),
+      nextOccurrence: Timestamp.now(),
       status: 'ONGOING', // 새로운 Todo는 항상 'ONGOING' 상태로 시작
       createdAt: serverTimestamp(), // 서버 타임스탬프 사용
       uid,

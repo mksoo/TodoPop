@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getTodoById, getTodos } from '../api/todoApi';
 import { Todo } from '../types/todo.types';
-import { QueryKeyGenerator } from '../lib/QueryKeyGenerator';
+import QueryKeyGenerator from '../lib/QueryKeyGenerator';
 
 /**
  * 모든 할 일(Todo) 목록을 가져오는 React Query 훅입니다.

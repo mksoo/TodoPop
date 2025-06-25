@@ -1,12 +1,24 @@
 import { FirebaseAuthTypes } from '@react-native-firebase/auth';
-import { Timestamp } from '@react-native-firebase/firestore';
+import { doc, onSnapshot, Timestamp } from '@react-native-firebase/firestore';
 import { usersCollection } from '../lib/firebase';
-import { FirestoreUser } from '../types/user.types';
+import { User } from '../types/user.types';
 
 interface CheckAndCreateUserResult {
   isNewUser: boolean;
   message: string;
-  userData?: FirestoreUser; // 신규 생성 시 사용자 데이터 반환
+  userData?: User; // 신규 생성 시 사용자 데이터 반환
+}
+
+export const listenUser = (args: { uid: string, callback: (user: User | null) => void }) => {
+  const { uid, callback } = args;
+  return onSnapshot(doc(usersCollection, uid), (snapshot) => {
+    if (!snapshot || !snapshot.exists()) {
+      callback(null);
+      return;
+    }
+    const newUser = {id: snapshot.id, ...snapshot.data()} as User;
+    callback(newUser);
+  })
 }
 
 /**
@@ -28,7 +40,8 @@ export const checkAndCreateUserDocument = async (
 
     if (!userDoc.exists()) {
       // 신규 사용자: Firestore에 정보 저장
-      const newUserData: FirestoreUser = {
+      const newUserData: User = {
+        id: firebaseUser.uid,
         uid: firebaseUser.uid,
         displayName: firebaseUser.displayName,
         email: firebaseUser.email,
@@ -45,7 +58,7 @@ export const checkAndCreateUserDocument = async (
     } else {
       // 기존 사용자
       console.log('Existing user logged in:', firebaseUser.uid);
-      const existingUserData = userDoc.data() as FirestoreUser; // 타입 단언
+      const existingUserData = userDoc.data() as User; // 타입 단언
       return {
         isNewUser: false,
         message: `${firebaseUser.displayName || firebaseUser.email || '사용자'}님, 다시 오신 것을 환영합니다!`,
