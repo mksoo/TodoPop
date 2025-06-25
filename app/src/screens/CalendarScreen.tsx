@@ -1,16 +1,19 @@
 import ScreenHeader from '@/components/ScreenHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { colors } from '@/styles';
-import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, SafeAreaView, Text, FlatList } from 'react-native';
+import React, { useState, useMemo, useCallback } from 'react';
+import { View, StyleSheet, SafeAreaView, Text, FlatList, TouchableOpacity } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import dayjs from 'dayjs';
 import TodoItem from '@/components/TodoItem';
 import { useScheduleEntriesQuery } from '@/hooks/useScheduleEntryQueries';
 
 const CalendarScreen = () => {
+  const today = useMemo(() => dayjs().format('YYYY-MM-DD'), []);
   const [selectedDate, setSelectedDate] = useState<string>('');
-  const [selectedMonth, setSelectedMonth] = useState<number>(0);
+  const [selectedMonth, setSelectedMonth] = useState(dayjs().month() + 1);
+  const [selectedYear, setSelectedYear] = useState(dayjs().year());
+  
 
   const { currentUser } = useAuth();
   const { data: scheduleEntries } = useScheduleEntriesQuery();
@@ -57,12 +60,22 @@ const CalendarScreen = () => {
     });
   }, [scheduleEntries, selectedDate]);
 
+  const handleGoToToday = useCallback(() => {
+    setSelectedDate(today);
+    setSelectedMonth(dayjs().month() + 1);
+    setSelectedYear(dayjs().year());
+  }, [today]);
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.calendarWrapper}>
         <Calendar
           style={styles.calendar}
-          onMonthChange={month => setSelectedMonth(month.month)}
+          current={`${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`}
+          onMonthChange={month => {
+            setSelectedMonth(month.month);
+            setSelectedYear(month.year);
+          }}
           onDayPress={day => setSelectedDate(day.dateString)}
           markedDates={markedDates}
           markingType="multi-dot"
@@ -82,6 +95,13 @@ const CalendarScreen = () => {
             },
           }}
         />
+        {(selectedMonth !== dayjs().month() + 1 || selectedYear !== dayjs().year()) && (
+          <View style={styles.todayButtonWrapper}>
+            <TouchableOpacity style={styles.todayButton} onPress={handleGoToToday}>
+              <Text style={styles.todayButtonText}>오늘</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
       {selectedDate ? (
         <View style={styles.todoListContainer}>
@@ -133,6 +153,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginTop: 24,
+  },
+  todayButtonWrapper: {
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  todayButton: {
+    backgroundColor: colors.background.primary,
+    borderColor: colors.primary,
+    borderWidth: 1,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 20,
+    position: 'absolute',
+    bottom: 30,
+  },
+  todayButtonText: {
+    color: colors.primary,
+    fontWeight: 'bold',
   },
 });
 
