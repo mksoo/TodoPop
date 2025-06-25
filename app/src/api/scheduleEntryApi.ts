@@ -2,12 +2,19 @@ import { db } from "@/lib/firebase";
 import { plainToScheduleEntry } from "@/types/adapters/PlainToScheduleEntry";
 import { ScheduleEntry } from "@/types/scheduleEntry.types";
 import { collection, getDoc, getDocs, query, doc } from "@react-native-firebase/firestore";
+import auth from "@react-native-firebase/auth";
 
-export const getScheduleEntries = async (args: { uid: string }): Promise<ScheduleEntry[]> => {
-  const { uid } = args;
-  const scheduleEntriesCollection = collection(db, 'Users', uid, 'ScheduleEntries');
+const scheduleEntryCollection = (() => {
+  const currentUser = auth().currentUser;
+  if (!currentUser) {
+    throw new Error('User is not authenticated');
+  }
+  return collection(db, 'Users', currentUser.uid, 'ScheduleEntries');
+})();
+
+export const getScheduleEntries = async (): Promise<ScheduleEntry[]> => {
   try {
-    let q = query(scheduleEntriesCollection);
+    let q = query(scheduleEntryCollection);
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => (plainToScheduleEntry({ id: doc.id, ...doc.data() })));
   } catch (error) {
@@ -16,11 +23,10 @@ export const getScheduleEntries = async (args: { uid: string }): Promise<Schedul
   }
 }
 
-export const getScheduleEntryById = async (args: { id: string, uid: string }): Promise<ScheduleEntry> => {
-  const { id, uid } = args;
-  const scheduleEntriesCollection = collection(db, 'Users', uid, 'ScheduleEntries');
+export const getScheduleEntryById = async (args: { id: string }): Promise<ScheduleEntry> => {
+  const { id } = args;
   try {
-    const docRef = doc(scheduleEntriesCollection, id);
+    const docRef = doc(scheduleEntryCollection, id);
     const snapshot = await getDoc(docRef);
     return plainToScheduleEntry({ id: snapshot.id, ...snapshot.data() });
   } catch (error) {
