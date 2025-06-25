@@ -1,12 +1,15 @@
-import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-import { getAuth, onAuthStateChanged, FirebaseAuthTypes } from '@react-native-firebase/auth';
+import React, { createContext, useEffect, useContext, ReactNode } from 'react';
+import auth from '@react-native-firebase/auth';
+import useAuthStore from '@/stores/authStore';
+import { listenUser } from '@/api/userApi';
+import { User } from '@/types/user.types';
 
 // --- [1] 컨텍스트에서 제공할 데이터의 타입 정의 ---
 // AuthContext가 어떤 종류의 데이터를 하위 컴포넌트들에게 전달할지 정의하는 인터페이스입니다.
 // 여기서는 currentUser (로그인된 사용자 정보 객체 또는 null)와
 // isLoading (인증 상태를 확인 중인지 나타내는 boolean 값)을 정의했습니다.
 interface AuthContextType {
-  currentUser: FirebaseAuthTypes.User | null;
+  currentUser: User | null;
   isLoading: boolean;
   // 추후 로그인/로그아웃 함수와 같은 인증 관련 함수들도 여기에 추가하여
   // 컨텍스트를 통해 제공할 수 있습니다.
@@ -33,24 +36,51 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // --- [4a] 인증 상태 관리 ---
   // currentUser: 현재 로그인된 Firebase 사용자 객체를 저장하거나, 로그인되지 않았다면 null을 저장합니다.
-  const [currentUser, setCurrentUser] = useState<FirebaseAuthTypes.User | null>(null);
-  // isLoading: 앱이 시작될 때 Firebase로부터 현재 인증 상태를 가져오는 동안 true로 설정됩니다.
-  // 상태 확인이 완료되면 false로 변경됩니다. 이는 로딩 화면 표시에 사용됩니다.
-  const [isLoading, setIsLoading] = useState(true);
+  // const [currentUser, setCurrentUser] = useState<FirebaseAuthTypes.User | null>(null);
+  const { currentUser, isLoading, setCurrentUser, setIsLoading } = useAuthStore();
 
   // --- [4b] Firebase 인증 상태 리스너 설정 ---
   // useEffect 훅은 컴포넌트가 렌더링된 후 특정 작업을 수행하도록 합니다.
   // 여기서는 Firebase의 onAuthStateChanged 리스너를 설정하여,
   // 사용자의 로그인 또는 로그아웃 상태가 변경될 때마다 콜백 함수가 실행되도록 합니다.
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(getAuth(), user => {
-      setCurrentUser(user);
-      if (isLoading) {
+    setIsLoading(true);
+    let unSubscribeUser: () => void;
+    const unsubscribe = auth().onAuthStateChanged(user => {
+      if (!user) {
+        setCurrentUser(null);
         setIsLoading(false);
+        return;
       }
+      const {uid, providerData} = user;
+      const signInMethod = (() => {
+        const providerId = providerData[0].providerId;
+        if (providerId === 'google.com') {
+          return 'google';
+        }
+        return 'email';
+      })();
+
+      unSubscribeUser = listenUser({uid, callback: (user) => {
+        if (!user) {
+          setIsLoading(false);
+          return;
+        }
+
+        setCurrentUser({
+          signInMethod,
+          ...user
+        })
+      }})
+      setIsLoading(false);
     });
-    return unsubscribe;
-  }, [isLoading]);
+    return () => {
+      if (unSubscribeUser) {
+        unSubscribeUser();
+      }
+      unsubscribe();
+    }
+  }, []);
 
   // --- [4c] 컨텍스트 Provider를 통해 상태 값 제공 ---
   // AuthContext.Provider는 value prop을 통해 하위 컴포넌트들에게 currentUser와 isLoading 값을 전달합니다.

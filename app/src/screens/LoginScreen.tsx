@@ -2,7 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Alert, Platform, Text } from 'react-native';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import auth from '@react-native-firebase/auth';
-import { useCheckAndCreateUser } from '../hooks/userMutations';
+import { useCheckAndCreateUser } from '../hooks/useuserMutations';
 import { colors } from '../styles';
 
 const LoginScreen = () => {
