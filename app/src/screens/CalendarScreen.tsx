@@ -1,12 +1,17 @@
 import { colors } from '@/styles';
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, FC } from 'react';
 import { View, StyleSheet, SafeAreaView, Text, FlatList, TouchableOpacity } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import dayjs from 'dayjs';
 import ScheduleEntryItem from '@/components/ScheduleEntryItem';
 import { useScheduleEntriesQuery } from '@/hooks/useScheduleEntryQueries';
+import SvgIcon from '@/components/common/SvgIcon';
+import { MainStackScreenProps } from '@/navigation/navigation';
 
-const CalendarScreen = () => {
+type Props = MainStackScreenProps<"Calendar">;
+
+const CalendarScreen: FC<Props> = ({ navigation }) => {
+
   const today = useMemo(() => dayjs().format('YYYY-MM-DD'), []);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedMonth, setSelectedMonth] = useState(dayjs().month() + 1);
@@ -119,6 +124,9 @@ const CalendarScreen = () => {
           )}
         </View>
       ) : null}
+      <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('ScheduleEntryAdd')}>
+        <SvgIcon name="add" />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 };
@@ -176,6 +184,12 @@ const styles = StyleSheet.create({
   todayButtonText: {
     color: colors.primary,
     fontWeight: 'bold',
+  },
+  addButton: {
+    position: 'absolute',
+    bottom: 30,
+    left: 16,
+    right: 16,
   },
 });
 
