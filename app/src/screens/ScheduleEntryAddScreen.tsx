@@ -1,17 +1,12 @@
 import React, { useState, useCallback, FC } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, Switch, TouchableOpacity, Platform } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { MainStackParamList, MainStackScreenProps } from '@/navigation/navigation';
-import { RepeatSettings, RepeatFrequency } from '../types/todo.types';
+import { Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Platform, SafeAreaView } from 'react-native';
+import { MainStackScreenProps } from '@/navigation/navigation';
 import { colors, spacing, fontSize, borderRadius } from '../styles';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
-import Badge from '../components/Badge';
 import { useAddScheduleEntry } from '@/hooks/useScheduleEntryMutations';
-
-const frequencies: RepeatFrequency[] = ['daily', 'weekly', 'monthly'];
-const daysInWeek = ['일', '월', '화', '수', '목', '금', '토'];
+import ScreenHeader from '@/components/ScreenHeader';
+import SvgIcon from '@/components/common/SvgIcon';
 
 type Props = MainStackScreenProps<"ScheduleEntryAdd">;
 
@@ -22,8 +17,6 @@ const ScheduleEntryAddScreen: FC<Props> = ({ navigation }) => {
   const [title, setTitle] = useState('');
   const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [isRepeatEnabled, setIsRepeatEnabled] = useState(false);
-  const [repeatSettings, setRepeatSettings] = useState<RepeatSettings | undefined>(undefined);
 
   const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     const currentDate = selectedDate || dueDate;
@@ -34,68 +27,60 @@ const ScheduleEntryAddScreen: FC<Props> = ({ navigation }) => {
   };
 
   const handleSave = useCallback(() => {
-    addScheduleEntry({ data: { title, } }, {
+    addScheduleEntry({ data: { title, type: "EVENT"} }, {
       onSuccess: () => {
         navigation.goBack();
       }
     });
-  }, [title, dueDate, isRepeatEnabled, repeatSettings, addScheduleEntry, navigation]);
+  }, [title, dueDate, addScheduleEntry, navigation]);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <Text style={styles.label}>제목</Text>
-      <TextInput
-        style={styles.input}
-        value={title}
-        onChangeText={setTitle}
-        placeholder="할 일 제목"
-        placeholderTextColor={colors.text.secondary}
-      />
-
-      <Text style={styles.label}>마감일</Text>
-      <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.dateDisplay}>
-        <Text style={styles.dateText}>{dueDate ? dayjs(dueDate).format('YYYY-MM-DD') : '날짜 선택'}</Text>
-      </TouchableOpacity>
-      {showDatePicker && (
-        <DateTimePicker
-          value={dueDate || new Date()}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={handleDateChange}
+    <SafeAreaView style={styles.container}>
+      <ScreenHeader 
+      left={
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <SvgIcon name="alphabet-x" color={colors.text.secondary} size={24} />
+        </TouchableOpacity>
+      }
+      title="일정 추가"
+      right={
+        <TouchableOpacity onPress={handleSave} disabled={isAdding}>
+          <SvgIcon name="check" color={isAdding ? colors.text.disabled : colors.primary} size={32} />
+        </TouchableOpacity>
+      }
+       />
+      <ScrollView contentContainerStyle={styles.contentContainer}>
+        <Text style={styles.label}>제목</Text>
+        <TextInput
+          style={styles.input}
+          value={title}
+          onChangeText={setTitle}
+          placeholder="할 일 제목"
+          placeholderTextColor={colors.text.secondary}
         />
-      )}
-      <TouchableOpacity 
-        style={styles.secondaryButton} 
-        onPress={() => setDueDate(undefined)}
-      >
-        <Text style={styles.secondaryButtonText}>
-          {dueDate ? "마감일 초기화" : "마감일 설정 안 함"}
-        </Text>
-      </TouchableOpacity>
 
-      <View style={styles.switchContainer}>
-        <Text style={styles.label}>반복 설정</Text>
-        <Switch
-          trackColor={{ false: colors.border.default, true: colors.primary }}
-          thumbColor={isRepeatEnabled ? colors.background.primary : colors.background.secondary}
-          ios_backgroundColor={colors.border.default}
-          onValueChange={setIsRepeatEnabled}
-          value={isRepeatEnabled}
-        />
-      </View>
-
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={[styles.saveButton, isAdding && styles.saveButtonDisabled]} 
-          onPress={handleSave} 
-          disabled={isAdding}
+        <Text style={styles.label}>마감일</Text>
+        <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.dateDisplay}>
+          <Text style={styles.dateText}>{dueDate ? dayjs(dueDate).format('YYYY-MM-DD') : '날짜 선택'}</Text>
+        </TouchableOpacity>
+        {showDatePicker && (
+          <DateTimePicker
+            value={dueDate || new Date()}
+            mode="date"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={handleDateChange}
+          />
+        )}
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() => setDueDate(undefined)}
         >
-          <Text style={styles.saveButtonText}>
-            {isAdding ? "저장 중..." : "저장"}
+          <Text style={styles.secondaryButtonText}>
+            {dueDate ? "마감일 초기화" : "마감일 설정 안 함"}
           </Text>
         </TouchableOpacity>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -167,7 +152,7 @@ const styles = StyleSheet.create({
   },
   repeatSettingsContainer: {
     paddingVertical: spacing.md,
-    borderBottomWidth:1,
+    borderBottomWidth: 1,
     borderColor: colors.border.light,
     marginBottom: spacing.lg,
   },

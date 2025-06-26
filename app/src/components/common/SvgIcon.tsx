@@ -2,12 +2,18 @@ import { FC, memo, useMemo } from "react";
 import { ColorValue, PixelRatio, StyleProp, View, ViewStyle } from "react-native";
 
 import AddIcon from '@/assets/icons/add.svg';
+import AlphabetXIcon from '@/assets/icons/alphabet-x.svg';
+import CheckIcon from '@/assets/icons/check.svg';
 
 export type IconName = 
-  | 'add';
+  | 'add'
+  | 'alphabet-x'
+  | 'check';
 
 const IconMap: {[key in IconName]: FC<any>} = {
   add: AddIcon,
+  'alphabet-x': AlphabetXIcon,
+  check: CheckIcon,
 }
 
 interface Props {
