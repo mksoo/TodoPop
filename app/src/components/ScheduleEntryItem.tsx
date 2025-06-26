@@ -36,7 +36,7 @@ const ScheduleEntryItem: React.FC<ScheduleEntryItemProps> = React.memo(({
 
   return (
     <TouchableOpacity 
-      style={styles.todoItemContainer}
+      style={styles.entryItemContainer}
       onPress={handleNavigateToEdit}>
 
       <TouchableOpacity onPress={handleToggleStatusCb} style={[
@@ -73,7 +73,7 @@ const ScheduleEntryItem: React.FC<ScheduleEntryItemProps> = React.memo(({
 });
 
 const styles = StyleSheet.create({
-  todoItemContainer: {
+  entryItemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.md,
