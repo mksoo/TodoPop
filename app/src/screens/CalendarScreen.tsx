@@ -3,7 +3,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { View, StyleSheet, SafeAreaView, Text, FlatList, TouchableOpacity } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import dayjs from 'dayjs';
-import TodoItem from '@/components/TodoItem';
+import ScheduleEntryItem from '@/components/ScheduleEntryItem';
 import { useScheduleEntriesQuery } from '@/hooks/useScheduleEntryQueries';
 
 const CalendarScreen = () => {
@@ -111,7 +111,7 @@ const CalendarScreen = () => {
             <FlatList
               data={todosForSelectedDate}
               keyExtractor={item => item.id}
-              renderItem={({ item }) => <TodoItem item={item} />}
+              renderItem={({ item }) => <ScheduleEntryItem item={item} />}
               contentContainerStyle={styles.listContentContainer}
             />
           ) : (

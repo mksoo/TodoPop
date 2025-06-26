@@ -3,7 +3,7 @@ import { View, Text, FlatList, Button, TextInput, StyleSheet, Alert, Image, Touc
 import { Todo, RepeatSettings } from '../types/todo.types';
 import { useGetTodos } from '../hooks/useTodosQueries';
 import { useAddTodo } from '../hooks/useTodosMutations';
-import TodoItem from '../components/TodoItem';
+import ScheduleEntryItem from '../components/ScheduleEntryItem';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MainStackParamList } from '../navigation/AppNavigator';
@@ -119,7 +119,7 @@ const TodoListScreen: React.FC = () => {
           </TouchableOpacity>
         )}
         renderItem={({ item, section }) => 
-          collapsedSections[section.title] ? null : <TodoItem item={item} />
+          collapsedSections[section.title] ? null : <ScheduleEntryItem item={item} />
         }
         renderSectionFooter={({ section }) =>
           !collapsedSections[section.title] && section.data.length === 0 ? (
