@@ -16,6 +16,7 @@ type FormValues = {
   title: string;
   startAt?: Date;
   endAt?: Date;
+  description?: string;
 };
 
 const ScheduleEntryAddScreen: FC<Props> = ({ navigation }) => {
@@ -43,6 +44,7 @@ const ScheduleEntryAddScreen: FC<Props> = ({ navigation }) => {
             if (event.type === 'set' && selectedDate) {
               setTempDate(selectedDate);
               setDateOrTime('time');
+              setIsAllDay(false);
             } else {
               setPickerMode(null);
               setDateOrTime('date');
@@ -65,6 +67,7 @@ const ScheduleEntryAddScreen: FC<Props> = ({ navigation }) => {
                 selectedTime.getMinutes()
               );
               setValue(pickerMode === 'start' ? 'startAt' : 'endAt', finalDate);
+              setIsAllDay(false);
             }
             setPickerMode(null);
             setDateOrTime('date');
@@ -84,6 +87,7 @@ const ScheduleEntryAddScreen: FC<Props> = ({ navigation }) => {
         type: "EVENT",
         startAt: data.startAt ? firestore.Timestamp.fromDate(data.startAt) : firestore.Timestamp.fromDate(dayjs().toDate()),
         endAt: data.endAt ? firestore.Timestamp.fromDate(data.endAt) : firestore.Timestamp.fromDate(dayjs().add(1, 'hour').toDate()),
+        description: data.description,
       }
     }, {
       onSuccess: () => {
@@ -130,7 +134,6 @@ const ScheduleEntryAddScreen: FC<Props> = ({ navigation }) => {
             />
           )}
         />
-
         <View style={styles.rowContainer}>
           <View style={styles.dateTimeColumn}>
             <Text style={styles.label}>시작</Text>
@@ -208,6 +211,21 @@ const ScheduleEntryAddScreen: FC<Props> = ({ navigation }) => {
             <Text style={{ color: isAllDay ? colors.grayscale[100] : colors.text.primary, fontWeight: 'bold' }}>종일</Text>
           </TouchableOpacity>
         </View>
+
+        <Text style={styles.label}>설명</Text>
+        <Controller
+          control={control}
+          name="description"
+          render={({ field: { onChange, value } }) => (
+            <TextInput
+              style={styles.input}
+              value={value}
+              onChangeText={onChange}
+              placeholder="설명"
+              placeholderTextColor={colors.text.secondary}
+            />
+          )}
+        />
         {showDatePicker && Platform.OS === 'ios' && (
           <DateTimePicker
             value={pickerMode === 'end' && endAt ? endAt : startAt || new Date()}
@@ -215,6 +233,7 @@ const ScheduleEntryAddScreen: FC<Props> = ({ navigation }) => {
             onChange={(event, selectedDate) => {
               if (selectedDate) {
                 setValue(pickerMode === 'start' ? 'startAt' : 'endAt', selectedDate);
+                setIsAllDay(false);
               }
               setShowDatePicker(false);
               setPickerMode(null);
