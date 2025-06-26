@@ -7,19 +7,8 @@ import { ActivityIndicator, View, StyleSheet } from 'react-native'; // 로딩 �
 import { useAuth } from '../contexts/AuthContext'; // AuthContext로부터 인증 상태를 가져오기 위한 훅
 import { colors } from '@/styles';
 import CalendarScreen from '@/screens/CalendarScreen';
-
-// --- 네비게이션 스택별 파라미터 타입 정의 --- 
-// MainStack (로그인 후 사용되는 주요 기능 화면들)의 각 화면이 받을 수 있는 파라미터를 정의합니다.
-export type MainStackParamList = {
-  TodoList: undefined; // TodoList 화면은 파라미터를 받지 않습니다.
-  TodoEdit: { todoId: string }; // TodoEdit 화면은 todoId 문자열을 파라미터로 받습니다.
-  Calendar: undefined; // Calendar 화면은 파라미터를 받지 않습니다.
-};
-
-// AuthStack (로그인 전 사용되는 인증 관련 화면들)의 각 화면이 받을 수 있는 파라미터를 정의합니다.
-export type AuthStackParamList = {
-  Login: undefined; // Login 화면은 파라미터를 받지 않습니다.
-};
+import { AuthStackParamList, MainStackParamList } from './navigation';
+import ScheduleEntryAddScreen from '@/screens/ScheduleEntryAddScreen';
 
 // --- 네비게이터 생성 --- 
 // 각 스택에 대한 네비게이터 객체를 생성합니다.
@@ -52,6 +41,11 @@ const AppNavigator: React.FC = () => {
         options={{ headerShown: false }}
       />
       <MainStack.Screen 
+        name="ScheduleEntryAdd"
+        component={ScheduleEntryAddScreen}
+        options={{ headerShown: false }}
+      />
+      <MainStack.Screen 
         name="TodoList" 
         component={TodoListScreen} 
         options={{ title: '나의 할 일' }}
@@ -81,5 +75,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
+
 
 export default AppNavigator; 
