@@ -125,7 +125,7 @@ const CalendarScreen: FC<Props> = ({ navigation }) => {
         </View>
       ) : null}
       <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('ScheduleEntryAdd')}>
-        <SvgIcon name="add" />
+        <SvgIcon name="add" color={colors.primary} style={styles.addButtonIcon} />
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -188,9 +188,27 @@ const styles = StyleSheet.create({
   addButton: {
     position: 'absolute',
     bottom: 30,
-    left: 16,
-    right: 16,
+    left: '50%',
+    transform: [{ translateX: -16 }],
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.background.primary,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    elevation: 4,
+    shadowColor: colors.grayscale[900],
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
+  addButtonIcon: {
+    width: 24,
+    height: 24,
+    tintColor: colors.primary,
+  }
 });
 
 export default CalendarScreen; 
