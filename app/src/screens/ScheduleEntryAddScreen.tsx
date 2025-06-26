@@ -1,84 +1,21 @@
-import React, { useCallback, FC, useState, useEffect } from 'react';
-import { Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Platform, SafeAreaView, View } from 'react-native';
+import React, { useCallback, FC } from 'react';
+import { StyleSheet, TouchableOpacity, Platform, SafeAreaView } from 'react-native';
 import { MainStackScreenProps } from '@/navigation/navigation';
 import { colors, spacing, fontSize, borderRadius } from '../styles';
-import DateTimePicker, { DateTimePickerEvent, DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
 import { useAddScheduleEntry } from '@/hooks/useScheduleEntryMutations';
 import ScreenHeader from '@/components/ScreenHeader';
 import SvgIcon from '@/components/common/SvgIcon';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import firestore from '@react-native-firebase/firestore';
+import { ScheduleEntryFormSection, FormValues, useScheduleEntryFormSection } from '../components/ScheduleEntryFormSection';
 
-type Props = MainStackScreenProps<"ScheduleEntryAdd">;
-
-type FormValues = {
-  title: string;
-  startAt?: Date;
-  endAt?: Date;
-  description?: string;
-};
-
-const ScheduleEntryAddScreen: FC<Props> = ({ navigation }) => {
+const ScheduleEntryAddScreen: FC<MainStackScreenProps<'ScheduleEntryAdd'>> = ({ navigation }) => {
   const { mutate: addScheduleEntry, isPending: isAdding } = useAddScheduleEntry();
-
-  const { control, handleSubmit, reset, setValue, watch } = useForm<FormValues>({
-    defaultValues: { title: '', startAt: undefined, endAt: undefined },
+  const form = useForm<FormValues>({
+    defaultValues: { title: '', startAt: undefined, endAt: undefined, description: '' },
   });
-
-  const [pickerMode, setPickerMode] = useState<'start' | 'end' | null>(null);
-  const [dateOrTime, setDateOrTime] = useState<'date' | 'time'>('date');
-  const [tempDate, setTempDate] = useState<Date | null>(null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [isAllDay, setIsAllDay] = useState(false);
-
-  const startAt = watch('startAt');
-  const endAt = watch('endAt');
-
-  useEffect(() => {
-    if (pickerMode && Platform.OS === 'android') {
-      if (dateOrTime === 'date') {
-        DateTimePickerAndroid.open({
-          value: pickerMode === 'start' && startAt ? startAt : endAt || new Date(),
-          onChange: (event, selectedDate) => {
-            if (event.type === 'set' && selectedDate) {
-              setTempDate(selectedDate);
-              setDateOrTime('time');
-              setIsAllDay(false);
-            } else {
-              setPickerMode(null);
-              setDateOrTime('date');
-              setTempDate(null);
-            }
-          },
-          display: 'spinner',
-          mode: 'date',
-        });
-      } else if (dateOrTime === 'time' && tempDate) {
-        DateTimePickerAndroid.open({
-          value: tempDate,
-          onChange: (event, selectedTime) => {
-            if (event.type === 'set' && selectedTime) {
-              const finalDate = new Date(
-                tempDate.getFullYear(),
-                tempDate.getMonth(),
-                tempDate.getDate(),
-                selectedTime.getHours(),
-                selectedTime.getMinutes()
-              );
-              setValue(pickerMode === 'start' ? 'startAt' : 'endAt', finalDate);
-              setIsAllDay(false);
-            }
-            setPickerMode(null);
-            setDateOrTime('date');
-            setTempDate(null);
-          },
-          display: 'spinner',
-          mode: 'time',
-        });
-      }
-    }
-  }, [pickerMode, dateOrTime, tempDate]);
+  const formSection = useScheduleEntryFormSection(form);
 
   const onSubmit = useCallback((data: FormValues) => {
     addScheduleEntry({
@@ -92,155 +29,29 @@ const ScheduleEntryAddScreen: FC<Props> = ({ navigation }) => {
     }, {
       onSuccess: () => {
         navigation.goBack();
-        reset();
+        form.reset();
       }
     });
-  }, [addScheduleEntry, navigation, reset]);
+  }, [addScheduleEntry, navigation, form]);
 
   return (
     <SafeAreaView style={styles.container}>
       <ScreenHeader 
-      left={
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <SvgIcon name="alphabet-x" color={colors.grayscale[100]} size={24} />
-        </TouchableOpacity>
-      }
-      title="일정 추가"
-      right={
-        <TouchableOpacity onPress={handleSubmit(onSubmit)} disabled={isAdding}>
-          <SvgIcon name="check" color={isAdding ? colors.text.disabled : colors.grayscale[100]} size={32} />
-        </TouchableOpacity>
-      }
-      titleStyle={{
-        color: colors.grayscale[100],
-      }}
-      containerStyle={{
-        backgroundColor: colors.primary,
-      }}
-       />
-      <ScrollView contentContainerStyle={styles.contentContainer}>
-        <Text style={styles.label}>제목</Text>
-        <Controller
-          control={control}
-          name="title"
-          rules={{ required: true }}
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              style={styles.input}
-              value={value}
-              onChangeText={onChange}
-              placeholder="일정 제목"
-              placeholderTextColor={colors.text.secondary}
-            />
-          )}
-        />
-        <View style={styles.rowContainer}>
-          <View style={styles.dateTimeColumn}>
-            <Text style={styles.label}>시작</Text>
-            <Controller
-              control={control}
-              name="startAt"
-              render={({ field: { value } }) => (
-                <TouchableOpacity
-                  style={styles.dateTimeButton}
-                  onPress={() => {
-                    if (Platform.OS === 'android') {
-                      setPickerMode('start');
-                      setDateOrTime('date');
-                      setTempDate(null);
-                    } else {
-                      setPickerMode('start');
-                      setShowDatePicker(true);
-                    }
-                  }}
-                >
-                  <Text style={styles.dateTimeText}>
-                    {value ? dayjs(value).format('YYYY-MM-DD HH:mm') : '시작 날짜/시간'}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-          <View style={styles.dateTimeColumn}>
-            <Text style={styles.label}>종료</Text>
-            <Controller
-              control={control}
-              name="endAt"
-              render={({ field: { value } }) => (
-                <TouchableOpacity
-                  style={styles.dateTimeButton}
-                  onPress={() => {
-                    if (Platform.OS === 'android') {
-                      setPickerMode('end');
-                      setDateOrTime('date');
-                      setTempDate(null);
-                    } else {
-                      setPickerMode('end');
-                      setShowDatePicker(true);
-                    }
-                  }}
-                >
-                  <Text style={styles.dateTimeText}>
-                    {value ? dayjs(value).format('YYYY-MM-DD HH:mm') : '종료 날짜/시간'}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md }}>
-          <TouchableOpacity
-            style={[
-              { 
-                paddingVertical: spacing.sm, 
-                paddingHorizontal: spacing.md, 
-                borderRadius: borderRadius.sm, 
-                borderWidth: 1, 
-                borderColor: isAllDay ? colors.primary : colors.border.default, 
-                backgroundColor: isAllDay ? colors.primary : colors.background.secondary,
-                marginRight: 8,
-              }
-            ]}
-            onPress={() => {
-              let baseDate = startAt ? dayjs(startAt) : dayjs();
-              setValue('startAt', baseDate.startOf('day').toDate());
-              setValue('endAt', baseDate.add(1, 'day').startOf('day').toDate());
-              setIsAllDay(true);
-            }}
-          >
-            <Text style={{ color: isAllDay ? colors.grayscale[100] : colors.text.primary, fontWeight: 'bold' }}>종일</Text>
+        left={
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <SvgIcon name="alphabet-x" color={colors.grayscale[100]} size={24} />
           </TouchableOpacity>
-        </View>
-
-        <Text style={styles.label}>설명</Text>
-        <Controller
-          control={control}
-          name="description"
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              style={styles.input}
-              value={value}
-              onChangeText={onChange}
-              placeholder="설명"
-              placeholderTextColor={colors.text.secondary}
-            />
-          )}
-        />
-        {showDatePicker && Platform.OS === 'ios' && (
-          <DateTimePicker
-            value={pickerMode === 'end' && endAt ? endAt : startAt || new Date()}
-            mode="datetime"
-            onChange={(event, selectedDate) => {
-              if (selectedDate) {
-                setValue(pickerMode === 'start' ? 'startAt' : 'endAt', selectedDate);
-                setIsAllDay(false);
-              }
-              setShowDatePicker(false);
-              setPickerMode(null);
-            }}
-          />
-        )}
-      </ScrollView>
+        }
+        title="일정 추가"
+        right={
+          <TouchableOpacity onPress={form.handleSubmit(onSubmit)} disabled={isAdding}>
+            <SvgIcon name="check" color={isAdding ? colors.text.disabled : colors.grayscale[100]} size={32} />
+          </TouchableOpacity>
+        }
+        titleStyle={{ color: colors.grayscale[100] }}
+        containerStyle={{ backgroundColor: colors.primary }}
+      />
+      <ScheduleEntryFormSection {...formSection} form={form} styles={styles} />
     </SafeAreaView>
   );
 };
