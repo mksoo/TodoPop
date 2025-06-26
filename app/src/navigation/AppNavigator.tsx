@@ -9,6 +9,7 @@ import { colors } from '@/styles';
 import CalendarScreen from '@/screens/CalendarScreen';
 import { AuthStackParamList, MainStackParamList } from './navigation';
 import ScheduleEntryAddScreen from '@/screens/ScheduleEntryAddScreen';
+import ScheduleEntryEditScreen from '@/screens/ScheduleEntryEditScreen';
 
 // --- 네비게이터 생성 --- 
 // 각 스택에 대한 네비게이터 객체를 생성합니다.
@@ -45,15 +46,15 @@ const AppNavigator: React.FC = () => {
         component={ScheduleEntryAddScreen}
         options={{ headerShown: false }}
       />
+      <MainStack.Screen
+        name="ScheduleEntryEdit"
+        component={ScheduleEntryEditScreen}
+        options={{ headerShown: false }}
+      />
       <MainStack.Screen 
         name="TodoList" 
         component={TodoListScreen} 
         options={{ title: '나의 할 일' }}
-      />
-      <MainStack.Screen 
-        name="TodoEdit" 
-        component={TodoEditScreen} 
-        options={{ title: '할 일 수정' }}
       />
     </MainStack.Navigator>
   ) : (

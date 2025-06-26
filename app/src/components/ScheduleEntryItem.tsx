@@ -28,9 +28,9 @@ const ScheduleEntryItem: React.FC<ScheduleEntryItemProps> = React.memo(({
     await deleteScheduleEntry({ id: item.id });
   }, [deleteScheduleEntry, item.id]);
 
-  const handleNavigateToEdit = () => {
-    navigation.navigate('TodoEdit', { todoId: item.id });
-  };
+  const handleNavigateToEdit = useCallback(() => {
+    navigation.navigate('ScheduleEntryEdit', { scheduleEntryId: item.id });
+  }, [navigation, item.id]);
 
   if (!item) return null;
 

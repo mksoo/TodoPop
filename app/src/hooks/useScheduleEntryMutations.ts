@@ -41,6 +41,19 @@ export const useUpdateScheduleEntryCompleted = () => {
   });
 };
 
+export const useUpdateScheduleEntry = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (args: { id: string, data: Partial<ScheduleEntry> }) => {
+      const { id, data } = args;
+      await updateScheduleEntry({ id, data });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QueryKeyGenerator.scheduleEntries() });
+    }
+  });
+}
+
 export const useDeleteScheduleEntry = () => {
   const queryClient = useQueryClient();
   return useMutation({

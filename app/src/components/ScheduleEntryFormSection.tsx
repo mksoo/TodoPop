@@ -4,6 +4,7 @@ import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/d
 import { Controller, UseFormReturn } from 'react-hook-form';
 import dayjs from 'dayjs';
 import { colors, spacing, borderRadius } from '../styles';
+import { ScheduleEntry } from '@/types/scheduleEntry.types';
 
 export type FormValues = {
   title: string;
@@ -91,10 +92,22 @@ interface ScheduleEntryFormSectionProps {
   startAt?: Date;
   endAt?: Date;
   styles: any;
+  entry?: ScheduleEntry;
 }
 
 export const ScheduleEntryFormSection: FC<ScheduleEntryFormSectionProps> = ({
-  form, pickerMode, setPickerMode, showDatePicker, setShowDatePicker, isAllDay, setIsAllDay, dateOrTime, setDateOrTime, tempDate, setTempDate, startAt, endAt, styles
+  form, 
+  pickerMode, 
+  setPickerMode, 
+  showDatePicker, 
+  setShowDatePicker, 
+  isAllDay, 
+  setIsAllDay, 
+  setDateOrTime, 
+  setTempDate, 
+  startAt, 
+  endAt, 
+  styles
 }) => (
   <ScrollView contentContainerStyle={styles.contentContainer}>
     <Text style={styles.label}>제목</Text>
