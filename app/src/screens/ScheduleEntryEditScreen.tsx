@@ -3,7 +3,7 @@ import { StyleSheet, TouchableOpacity, Platform, SafeAreaView, Alert } from 'rea
 import { MainStackScreenProps } from '@/navigation/navigation';
 import { colors, spacing, fontSize, borderRadius } from '../styles';
 import dayjs from 'dayjs';
-import { useUpdateScheduleEntry } from '@/hooks/useScheduleEntryMutations'; // 실제 구현 필요
+import { useDeleteScheduleEntry, useUpdateScheduleEntry } from '@/hooks/useScheduleEntryMutations'; // 실제 구현 필요
 import ScreenHeader from '@/components/ScreenHeader';
 import SvgIcon from '@/components/common/SvgIcon';
 import { useForm } from 'react-hook-form';
@@ -16,7 +16,8 @@ import { Timestamp } from '@react-native-firebase/firestore';
 const ScheduleEntryEditScreen: FC<MainStackScreenProps<'ScheduleEntryEdit'>> = ({ navigation, route }) => {
   const { scheduleEntryId } = route.params;
   const { data: entry } = useScheduleEntryByIdQuery({ id: scheduleEntryId });
-  const { mutate: updateScheduleEntry, isPending: isUpdating } = useUpdateScheduleEntry();
+  const { mutateAsync: updateScheduleEntry, isPending: isUpdating } = useUpdateScheduleEntry();
+  const { mutateAsync: deleteScheduleEntry, isPending: isDeleting } = useDeleteScheduleEntry();
   const form = useForm<FormValues>({
     defaultValues: {
       title: entry?.title || '',
@@ -58,7 +59,7 @@ const ScheduleEntryEditScreen: FC<MainStackScreenProps<'ScheduleEntryEdit'>> = (
     }
   }, [form, navigation, entry]);
 
-  const onSubmit = useCallback((data: FormValues) => {
+  const onSubmit = useCallback(async (data: FormValues) => {
     if (!entry) return;
     // 데이터가 달라질 때만 update 호출
     const entryStartAt = entry.startAt ? (entry.startAt.toDate ? entry.startAt.toDate() : entry.startAt) : undefined;
@@ -68,7 +69,7 @@ const ScheduleEntryEditScreen: FC<MainStackScreenProps<'ScheduleEntryEdit'>> = (
       (data.endAt && (!entryEndAt || dayjs(data.endAt).isSame(dayjs(entryEndAt instanceof Timestamp ? entryEndAt.toDate() : entryEndAt), 'minute') === false));
     if (!isDifferent) return;
 
-    updateScheduleEntry({
+    await updateScheduleEntry({
       id: entry?.id ?? '',
       data: {
         title: data.title,
@@ -83,7 +84,7 @@ const ScheduleEntryEditScreen: FC<MainStackScreenProps<'ScheduleEntryEdit'>> = (
       }
     });
     navigation.goBack();
-  }, [updateScheduleEntry, navigation, form, entry]);
+  }, [updateScheduleEntry, navigation, form, entry, deleteScheduleEntry]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -103,6 +104,27 @@ const ScheduleEntryEditScreen: FC<MainStackScreenProps<'ScheduleEntryEdit'>> = (
         containerStyle={{ backgroundColor: colors.secondary }}
       />
       <ScheduleEntryFormSection {...formSection} form={form} styles={styles}/>
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={async () => {
+          Alert.alert(
+            '일정 삭제',
+            '정말로 이 일정을 삭제하시겠습니까?',
+            [
+              { text: '취소', style: 'cancel' },
+              { text: '삭제', style: 'destructive', onPress: async () => {
+                await deleteScheduleEntry({ id: entry?.id ?? '' }, {
+                  onSuccess: () => {
+                    navigation.goBack();
+                  }
+                });
+              }},
+            ]
+          );
+        }}
+      >
+        <SvgIcon name="alphabet-x" color={colors.danger} size={24} />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 };
@@ -257,6 +279,25 @@ const styles = StyleSheet.create({
   dateTimeText: {
     fontSize: fontSize.md,
     color: colors.text.primary,
+  },
+  deleteButton: {
+    position: 'absolute',
+    bottom: 30,
+    left: '50%',
+    transform: [{ translateX: -16 }],
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.background.primary,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: colors.danger,
+    elevation: 4,
+    shadowColor: colors.grayscale[900],
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
 });
 
