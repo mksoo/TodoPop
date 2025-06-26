@@ -1,5 +1,5 @@
-import React, { useState, useCallback, FC } from 'react';
-import { Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Platform, SafeAreaView } from 'react-native';
+import React, { useCallback, FC, useState } from 'react';
+import { Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Platform, SafeAreaView, View } from 'react-native';
 import { MainStackScreenProps } from '@/navigation/navigation';
 import { colors, spacing, fontSize, borderRadius } from '../styles';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -7,78 +7,134 @@ import dayjs from 'dayjs';
 import { useAddScheduleEntry } from '@/hooks/useScheduleEntryMutations';
 import ScreenHeader from '@/components/ScreenHeader';
 import SvgIcon from '@/components/common/SvgIcon';
+import { useForm, Controller } from 'react-hook-form';
 
 type Props = MainStackScreenProps<"ScheduleEntryAdd">;
 
-const ScheduleEntryAddScreen: FC<Props> = ({ navigation }) => {
+type FormValues = {
+  title: string;
+  startAt?: Date;
+  endAt?: Date;
+};
 
+const ScheduleEntryAddScreen: FC<Props> = ({ navigation }) => {
   const { mutate: addScheduleEntry, isPending: isAdding } = useAddScheduleEntry();
 
-  const [title, setTitle] = useState('');
-  const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
+  const { control, handleSubmit, reset, setValue, watch } = useForm<FormValues>({
+    defaultValues: { title: '', startAt: undefined, endAt: undefined },
+  });
+
+  const [pickerMode, setPickerMode] = useState<'start' | 'end' | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
+  const startAt = watch('startAt');
+  const endAt = watch('endAt');
+
   const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    const currentDate = selectedDate || dueDate;
-    setShowDatePicker(Platform.OS === 'ios');
-    if (currentDate) {
-      setDueDate(currentDate);
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+      setPickerMode(null);
+      if (event.type === 'set' && selectedDate) {
+        setValue(pickerMode === 'start' ? 'startAt' : 'endAt', selectedDate);
+      }
+    } else {
+      if (selectedDate) {
+        setValue(pickerMode === 'start' ? 'startAt' : 'endAt', selectedDate);
+      }
     }
   };
 
-  const handleSave = useCallback(() => {
-    addScheduleEntry({ data: { title, type: "EVENT"} }, {
+  const onSubmit = useCallback((data: FormValues) => {
+    addScheduleEntry({ data: { title: data.title, type: "EVENT", startAt: data.startAt, endAt: data.endAt } }, {
       onSuccess: () => {
         navigation.goBack();
+        reset();
       }
     });
-  }, [title, dueDate, addScheduleEntry, navigation]);
+  }, [addScheduleEntry, navigation, reset]);
 
   return (
     <SafeAreaView style={styles.container}>
       <ScreenHeader 
       left={
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <SvgIcon name="alphabet-x" color={colors.text.secondary} size={24} />
+          <SvgIcon name="alphabet-x" color={colors.grayscale[100]} size={24} />
         </TouchableOpacity>
       }
       title="일정 추가"
       right={
-        <TouchableOpacity onPress={handleSave} disabled={isAdding}>
-          <SvgIcon name="check" color={isAdding ? colors.text.disabled : colors.primary} size={32} />
+        <TouchableOpacity onPress={handleSubmit(onSubmit)} disabled={isAdding}>
+          <SvgIcon name="check" color={isAdding ? colors.text.disabled : colors.grayscale[100]} size={32} />
         </TouchableOpacity>
       }
+      titleStyle={{
+        color: colors.grayscale[100],
+      }}
+      containerStyle={{
+        backgroundColor: colors.primary,
+      }}
        />
       <ScrollView contentContainerStyle={styles.contentContainer}>
         <Text style={styles.label}>제목</Text>
-        <TextInput
-          style={styles.input}
-          value={title}
-          onChangeText={setTitle}
-          placeholder="할 일 제목"
-          placeholderTextColor={colors.text.secondary}
+        <Controller
+          control={control}
+          name="title"
+          rules={{ required: true }}
+          render={({ field: { onChange, value } }) => (
+            <TextInput
+              style={styles.input}
+              value={value}
+              onChangeText={onChange}
+              placeholder="일정 제목"
+              placeholderTextColor={colors.text.secondary}
+            />
+          )}
         />
 
-        <Text style={styles.label}>마감일</Text>
-        <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.dateDisplay}>
-          <Text style={styles.dateText}>{dueDate ? dayjs(dueDate).format('YYYY-MM-DD') : '날짜 선택'}</Text>
-        </TouchableOpacity>
+        <View style={styles.rowContainer}>
+          <View style={styles.dateTimeColumn}>
+            <Text style={styles.label}>시작</Text>
+            <Controller
+              control={control}
+              name="startAt"
+              render={({ field: { value } }) => (
+                <TouchableOpacity
+                  style={styles.dateTimeButton}
+                  onPress={() => { setPickerMode('start'); setShowDatePicker(true); }}
+                >
+                  <Text style={styles.dateTimeText}>
+                    {value ? dayjs(value).format('YYYY-MM-DD HH:mm') : '시작 날짜/시간'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+          <View style={styles.dateTimeColumn}>
+            <Text style={styles.label}>종료</Text>
+            <Controller
+              control={control}
+              name="endAt"
+              render={({ field: { value } }) => (
+                <TouchableOpacity
+                  style={styles.dateTimeButton}
+                  onPress={() => { setPickerMode('end'); setShowDatePicker(true); }}
+                >
+                  <Text style={styles.dateTimeText}>
+                    {value ? dayjs(value).format('YYYY-MM-DD HH:mm') : '종료 날짜/시간'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </View>
         {showDatePicker && (
           <DateTimePicker
-            value={dueDate || new Date()}
-            mode="date"
+            value={pickerMode === 'end' && endAt ? endAt : startAt || new Date()}
+            mode="datetime"
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
             onChange={handleDateChange}
           />
         )}
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => setDueDate(undefined)}
-        >
-          <Text style={styles.secondaryButtonText}>
-            {dueDate ? "마감일 초기화" : "마감일 설정 안 함"}
-          </Text>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -100,7 +156,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   input: {
-    backgroundColor: colors.background.secondary,
+    backgroundColor: colors.background.primary,
     color: colors.text.primary,
     paddingHorizontal: spacing.sm,
     paddingVertical: Platform.OS === 'ios' ? spacing.sm + 2 : spacing.sm,
@@ -212,6 +268,28 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: spacing.sm,
+  },
+  rowContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+    gap: 12,
+  },
+  dateTimeColumn: {
+    flex: 1,
+  },
+  dateTimeButton: {
+    backgroundColor: colors.background.secondary,
+    padding: spacing.sm,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  dateTimeText: {
+    fontSize: fontSize.md,
+    color: colors.text.primary,
   },
 });
 
