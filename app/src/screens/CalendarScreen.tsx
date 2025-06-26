@@ -1,5 +1,3 @@
-import ScreenHeader from '@/components/ScreenHeader';
-import { useAuth } from '@/contexts/AuthContext';
 import { colors } from '@/styles';
 import React, { useState, useMemo, useCallback } from 'react';
 import { View, StyleSheet, SafeAreaView, Text, FlatList, TouchableOpacity } from 'react-native';
@@ -14,8 +12,6 @@ const CalendarScreen = () => {
   const [selectedMonth, setSelectedMonth] = useState(dayjs().month() + 1);
   const [selectedYear, setSelectedYear] = useState(dayjs().year());
   
-
-  const { currentUser } = useAuth();
   const { data: scheduleEntries } = useScheduleEntriesQuery();
 
   const markedDates = useMemo(() => {
@@ -105,7 +101,12 @@ const CalendarScreen = () => {
       </View>
       {selectedDate ? (
         <View style={styles.todoListContainer}>
-          <Text style={styles.selectedDateText}>{selectedDate}의 할 일</Text>
+          <Text style={styles.selectedDateText}>
+            {selectedDate}, {dayjs(selectedDate).format('dddd')}
+            <Text style={styles.selectedDateLunarText}>
+              {' '}음력 {dayjs(selectedDate).lunar("YYYY년 MM월 DD일")}
+            </Text>
+          </Text>
           {todosForSelectedDate.length > 0 ? (
             <FlatList
               data={todosForSelectedDate}
@@ -128,7 +129,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.grayscale[100],
   },
   calendarWrapper: {
-    flex: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.grayscale[200],
   },
   calendar: {
     width: '100%',
@@ -141,9 +143,12 @@ const styles = StyleSheet.create({
   },
   selectedDateText: {
     fontSize: 18,
-    fontWeight: 'bold',
     color: colors.primary,
     marginBottom: 8,
+  },
+  selectedDateLunarText: {
+    fontSize: 12,
+    color: colors.text.secondary,
   },
   listContentContainer: {
     paddingBottom: 16,

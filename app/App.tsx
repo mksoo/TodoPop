@@ -16,10 +16,14 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'; // isSameOrAfter 플러그인 import
+import ko from 'dayjs/locale/ko';
+import lunar from 'dayjs-lunar';
 
 dayjs.extend(customParseFormat);
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
+dayjs.extend(lunar);
+dayjs.locale(ko);
 
 // Google Sign-In 초기 설정
 // webClientId는 Google Cloud Console에서 가져온 웹 클라이언트 ID입니다.
