@@ -29,6 +29,7 @@ const ScheduleEntryAddScreen: FC<Props> = ({ navigation }) => {
   const [dateOrTime, setDateOrTime] = useState<'date' | 'time'>('date');
   const [tempDate, setTempDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isAllDay, setIsAllDay] = useState(false);
 
   const startAt = watch('startAt');
   const endAt = watch('endAt');
@@ -183,6 +184,29 @@ const ScheduleEntryAddScreen: FC<Props> = ({ navigation }) => {
               )}
             />
           </View>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md }}>
+          <TouchableOpacity
+            style={[
+              { 
+                paddingVertical: spacing.sm, 
+                paddingHorizontal: spacing.md, 
+                borderRadius: borderRadius.sm, 
+                borderWidth: 1, 
+                borderColor: isAllDay ? colors.primary : colors.border.default, 
+                backgroundColor: isAllDay ? colors.primary : colors.background.secondary,
+                marginRight: 8,
+              }
+            ]}
+            onPress={() => {
+              let baseDate = startAt ? dayjs(startAt) : dayjs();
+              setValue('startAt', baseDate.startOf('day').toDate());
+              setValue('endAt', baseDate.add(1, 'day').startOf('day').toDate());
+              setIsAllDay(true);
+            }}
+          >
+            <Text style={{ color: isAllDay ? colors.grayscale[100] : colors.text.primary, fontWeight: 'bold' }}>종일</Text>
+          </TouchableOpacity>
         </View>
         {showDatePicker && Platform.OS === 'ios' && (
           <DateTimePicker
