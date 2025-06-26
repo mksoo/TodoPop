@@ -1,13 +1,14 @@
-import React, { useCallback, FC, useState } from 'react';
+import React, { useCallback, FC, useState, useEffect } from 'react';
 import { Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Platform, SafeAreaView, View } from 'react-native';
 import { MainStackScreenProps } from '@/navigation/navigation';
 import { colors, spacing, fontSize, borderRadius } from '../styles';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerEvent, DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
 import { useAddScheduleEntry } from '@/hooks/useScheduleEntryMutations';
 import ScreenHeader from '@/components/ScreenHeader';
 import SvgIcon from '@/components/common/SvgIcon';
 import { useForm, Controller } from 'react-hook-form';
+import firestore from '@react-native-firebase/firestore';
 
 type Props = MainStackScreenProps<"ScheduleEntryAdd">;
 
@@ -25,27 +26,65 @@ const ScheduleEntryAddScreen: FC<Props> = ({ navigation }) => {
   });
 
   const [pickerMode, setPickerMode] = useState<'start' | 'end' | null>(null);
+  const [dateOrTime, setDateOrTime] = useState<'date' | 'time'>('date');
+  const [tempDate, setTempDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const startAt = watch('startAt');
   const endAt = watch('endAt');
 
-  const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowDatePicker(false);
-      setPickerMode(null);
-      if (event.type === 'set' && selectedDate) {
-        setValue(pickerMode === 'start' ? 'startAt' : 'endAt', selectedDate);
-      }
-    } else {
-      if (selectedDate) {
-        setValue(pickerMode === 'start' ? 'startAt' : 'endAt', selectedDate);
+  useEffect(() => {
+    if (pickerMode && Platform.OS === 'android') {
+      if (dateOrTime === 'date') {
+        DateTimePickerAndroid.open({
+          value: pickerMode === 'start' && startAt ? startAt : endAt || new Date(),
+          onChange: (event, selectedDate) => {
+            if (event.type === 'set' && selectedDate) {
+              setTempDate(selectedDate);
+              setDateOrTime('time');
+            } else {
+              setPickerMode(null);
+              setDateOrTime('date');
+              setTempDate(null);
+            }
+          },
+          display: 'spinner',
+          mode: 'date',
+        });
+      } else if (dateOrTime === 'time' && tempDate) {
+        DateTimePickerAndroid.open({
+          value: tempDate,
+          onChange: (event, selectedTime) => {
+            if (event.type === 'set' && selectedTime) {
+              const finalDate = new Date(
+                tempDate.getFullYear(),
+                tempDate.getMonth(),
+                tempDate.getDate(),
+                selectedTime.getHours(),
+                selectedTime.getMinutes()
+              );
+              setValue(pickerMode === 'start' ? 'startAt' : 'endAt', finalDate);
+            }
+            setPickerMode(null);
+            setDateOrTime('date');
+            setTempDate(null);
+          },
+          display: 'spinner',
+          mode: 'time',
+        });
       }
     }
-  };
+  }, [pickerMode, dateOrTime, tempDate]);
 
   const onSubmit = useCallback((data: FormValues) => {
-    addScheduleEntry({ data: { title: data.title, type: "EVENT", startAt: data.startAt, endAt: data.endAt } }, {
+    addScheduleEntry({
+      data: {
+        title: data.title,
+        type: "EVENT",
+        startAt: data.startAt ? firestore.Timestamp.fromDate(data.startAt) : firestore.Timestamp.fromDate(dayjs().toDate()),
+        endAt: data.endAt ? firestore.Timestamp.fromDate(data.endAt) : firestore.Timestamp.fromDate(dayjs().add(1, 'hour').toDate()),
+      }
+    }, {
       onSuccess: () => {
         navigation.goBack();
         reset();
@@ -100,7 +139,16 @@ const ScheduleEntryAddScreen: FC<Props> = ({ navigation }) => {
               render={({ field: { value } }) => (
                 <TouchableOpacity
                   style={styles.dateTimeButton}
-                  onPress={() => { setPickerMode('start'); setShowDatePicker(true); }}
+                  onPress={() => {
+                    if (Platform.OS === 'android') {
+                      setPickerMode('start');
+                      setDateOrTime('date');
+                      setTempDate(null);
+                    } else {
+                      setPickerMode('start');
+                      setShowDatePicker(true);
+                    }
+                  }}
                 >
                   <Text style={styles.dateTimeText}>
                     {value ? dayjs(value).format('YYYY-MM-DD HH:mm') : '시작 날짜/시간'}
@@ -117,7 +165,16 @@ const ScheduleEntryAddScreen: FC<Props> = ({ navigation }) => {
               render={({ field: { value } }) => (
                 <TouchableOpacity
                   style={styles.dateTimeButton}
-                  onPress={() => { setPickerMode('end'); setShowDatePicker(true); }}
+                  onPress={() => {
+                    if (Platform.OS === 'android') {
+                      setPickerMode('end');
+                      setDateOrTime('date');
+                      setTempDate(null);
+                    } else {
+                      setPickerMode('end');
+                      setShowDatePicker(true);
+                    }
+                  }}
                 >
                   <Text style={styles.dateTimeText}>
                     {value ? dayjs(value).format('YYYY-MM-DD HH:mm') : '종료 날짜/시간'}
@@ -127,12 +184,17 @@ const ScheduleEntryAddScreen: FC<Props> = ({ navigation }) => {
             />
           </View>
         </View>
-        {showDatePicker && (
+        {showDatePicker && Platform.OS === 'ios' && (
           <DateTimePicker
             value={pickerMode === 'end' && endAt ? endAt : startAt || new Date()}
             mode="datetime"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={handleDateChange}
+            onChange={(event, selectedDate) => {
+              if (selectedDate) {
+                setValue(pickerMode === 'start' ? 'startAt' : 'endAt', selectedDate);
+              }
+              setShowDatePicker(false);
+              setPickerMode(null);
+            }}
           />
         )}
       </ScrollView>
