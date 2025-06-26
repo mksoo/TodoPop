@@ -8,4 +8,6 @@ export interface ScheduleEntry {
   completed: boolean;
   startAt?: Timestamp;
   endAt?: Timestamp;
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
 }

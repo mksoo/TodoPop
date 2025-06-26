@@ -1,7 +1,20 @@
-import { deleteScheduleEntry, getScheduleEntryById, updateScheduleEntry } from "@/api/scheduleEntryApi";
+import { addScheduleEntry, deleteScheduleEntry, getScheduleEntryById, updateScheduleEntry } from "@/api/scheduleEntryApi";
 import QueryKeyGenerator from "@/lib/QueryKeyGenerator";
 import { ScheduleEntry } from "@/types/scheduleEntry.types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+export const useAddScheduleEntry = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (args: { data: Omit<ScheduleEntry, 'id' | 'completed'> }): Promise<string> => {
+      const { data } = args;
+      return await addScheduleEntry({ data });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QueryKeyGenerator.scheduleEntries() });
+    }
+  });
+};
 
 export const useUpdateScheduleEntryCompleted = () => {
   const queryClient = useQueryClient();
