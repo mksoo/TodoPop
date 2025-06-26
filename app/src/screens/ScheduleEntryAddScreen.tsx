@@ -1,5 +1,5 @@
 import React, { useCallback, FC } from 'react';
-import { StyleSheet, TouchableOpacity, Platform, SafeAreaView } from 'react-native';
+import { StyleSheet, TouchableOpacity, Platform, SafeAreaView, Alert } from 'react-native';
 import { MainStackScreenProps } from '@/navigation/navigation';
 import { colors, spacing, fontSize, borderRadius } from '../styles';
 import dayjs from 'dayjs';
@@ -16,6 +16,23 @@ const ScheduleEntryAddScreen: FC<MainStackScreenProps<'ScheduleEntryAdd'>> = ({ 
     defaultValues: { title: '', startAt: undefined, endAt: undefined, description: '' },
   });
   const formSection = useScheduleEntryFormSection(form);
+
+  const handleClose = useCallback(() => {
+    const values = form.getValues();
+    const hasValue = values.title || values.description || values.startAt || values.endAt;
+    if (hasValue) {
+      Alert.alert(
+        '작성 중인 내용이 있습니다',
+        '작성 중인 내용이 사라집니다. 정말 닫으시겠습니까?',
+        [
+          { text: '취소', style: 'cancel' },
+          { text: '닫기', style: 'destructive', onPress: () => navigation.goBack() },
+        ]
+      );
+    } else {
+      navigation.goBack();
+    }
+  }, [form, navigation]);
 
   const onSubmit = useCallback((data: FormValues) => {
     addScheduleEntry({
@@ -38,7 +55,7 @@ const ScheduleEntryAddScreen: FC<MainStackScreenProps<'ScheduleEntryAdd'>> = ({ 
     <SafeAreaView style={styles.container}>
       <ScreenHeader 
         left={
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={handleClose}>
             <SvgIcon name="alphabet-x" color={colors.grayscale[100]} size={24} />
           </TouchableOpacity>
         }
