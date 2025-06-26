@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { addTodo, updateTodo, getTodoById, deleteTodo } from '../api/todoApi';
 import { Todo } from '../types/todo.types';
-import { QueryKeyGenerator } from '../lib/QueryKeyGenerator';
+import QueryKeyGenerator from '../lib/QueryKeyGenerator';
 import { calculateNextOccurrence } from '../utils/repeatUtils';
 import { Timestamp } from '@react-native-firebase/firestore';
 
@@ -29,142 +29,6 @@ export const useAddTodo = (args: {uid: string}) => {
     onSuccess: () => {
       // 할 일 추가 성공 시, 전체 할 일 목록 캐시를 무효화하여 최신 데이터를 다시 가져오도록 합니다.
       queryClient.invalidateQueries({ queryKey: QueryKeyGenerator.allTodos() });
-    },
-  });
-};
-
-/**
- * 할 일(Todo)의 완료 상태를 업데이트하는 React Query 뮤테이션 훅입니다.
- * 반복 설정이 있는 할 일의 경우, 완료 시 다음 반복 할 일을 생성하는 로직을 포함합니다.
- * Optimistic Update를 사용하여 UI 반응성을 개선합니다.
- *
- * @returns `useMutation` 훅의 결과 객체.
- * @see updateTodo, addTodo, getTodoById API 함수를 사용합니다.
- * @see 성공 또는 실패 시 관련 쿼리 캐시를 무효화하거나 롤백합니다.
- */
-export const useUpdateTodoStatus = () => {
-  const queryClient = useQueryClient();
-  return useMutation<
-    void, // 성공 시 반환 타입
-    Error, // 오류 타입
-    { id: string; status: Todo['status'] }, // 뮤테이션 함수 인자 타입
-    { previousTodos?: Todo[]; previousTodo?: Todo } // onMutate 컨텍스트 타입
-  >({
-    mutationFn: async ({ id, status }) => {
-      // 1. 현재 할 일 정보를 가져옵니다.
-      const todoToUpdate = await getTodoById({ id });
-      if (!todoToUpdate) throw new Error('Todo not found for status update');
-
-      const updatesForCurrentTodo: Partial<Todo> = { status };
-      let newTodoDataForRepeat: Omit<Todo, 'id' | 'createdAt' | 'status'> | null = null;
-
-      // 2. 할 일이 'COMPLETED' 상태로 변경되고 반복 설정이 있는 경우 다음 반복 처리
-      if (status === 'COMPLETED' && todoToUpdate.repeatSettings) {
-        console.log('Timestamp in useUpdateTodoStatus before now():', Timestamp);
-        const now = Timestamp.now();
-        // 현재 완료되는 할 일의 repeatSettings 업데이트 (lastCompleted 설정)
-        updatesForCurrentTodo.repeatSettings = {
-          ...todoToUpdate.repeatSettings,
-          lastCompleted: now,
-        };
-
-        // 다음 반복일 계산
-        const nextOccurrenceTimestamp = calculateNextOccurrence({
-          repeatSettings: todoToUpdate.repeatSettings, // 현재 할 일의 반복 설정 사용
-          referenceDate: now, // 완료 시점을 기준으로 다음 발생일 계산
-          nextOccurrence: todoToUpdate.nextOccurrence, // 현재 nextOccurrence도 참고할 수 있도록 전달
-        });
-
-        if (nextOccurrenceTimestamp) {
-          // 다음 반복일이 존재하면, 새로운 반복 할 일 데이터 생성
-          newTodoDataForRepeat = {
-            title: todoToUpdate.title,
-            description: todoToUpdate.description, // description 추가
-            repeatSettings: { // 원본 반복 설정 복사 (lastCompleted는 없음)
-              ...todoToUpdate.repeatSettings,
-              lastCompleted: undefined, // 새로운 반복이므로 lastCompleted는 없음
-            },
-            nextOccurrence: nextOccurrenceTimestamp, // 계산된 다음 발생일
-            dueDate: todoToUpdate.dueDate, // 기존 마감일 유지 또는 로직에 따라 변경 가능
-            // googleCalendarEventId: todoToUpdate.googleCalendarEventId, // 필요시 유지
-          };
-        } else {
-          // 다음 반복일이 없으면 (예: 반복 종료일 도달), 현재 할 일의 nextOccurrence를 null로 설정하여 반복 종료
-          updatesForCurrentTodo.nextOccurrence = null;
-        }
-      } else if (status === 'COMPLETED' && !todoToUpdate.repeatSettings) {
-        // 반복 설정 없는 일반 할 일이 완료된 경우, nextOccurrence를 null로 설정 (선택적)
-        updatesForCurrentTodo.nextOccurrence = null; 
-      }
-      
-      // 3. 실제로 변경된 부분만 업데이트 (Firestore 쓰기 최소화)
-      const changedUpdates: Partial<Todo> = {};
-      if (updatesForCurrentTodo.status !== todoToUpdate.status) {
-        changedUpdates.status = updatesForCurrentTodo.status;
-      }
-      if (updatesForCurrentTodo.repeatSettings && 
-          JSON.stringify(updatesForCurrentTodo.repeatSettings) !== JSON.stringify(todoToUpdate.repeatSettings)) {
-        changedUpdates.repeatSettings = updatesForCurrentTodo.repeatSettings;    
-      }
-      if (updatesForCurrentTodo.hasOwnProperty('nextOccurrence') && 
-          updatesForCurrentTodo.nextOccurrence !== todoToUpdate.nextOccurrence) {
-        // Timestamp 비교는 toDate().getTime() 등으로 해야 정확하나, null 비교도 포함하여 단순 비교
-        changedUpdates.nextOccurrence = updatesForCurrentTodo.nextOccurrence;
-      }
-
-      if (Object.keys(changedUpdates).length > 0) {
-        const updatesToSend = Object.fromEntries(
-          Object.entries(changedUpdates).filter(([_, v]) => v !== undefined)
-        );
-        if (Object.keys(updatesToSend).length > 0) {
-          await updateTodo({ id, updates: updatesToSend });
-        }
-      }
-
-      // 4. 새로운 반복 할 일이 있으면 추가
-      if (newTodoDataForRepeat) {
-        await addTodo({ todo: newTodoDataForRepeat as Omit<Todo, 'id' | 'createdAt' | 'status'> & { title: string } });
-      }
-    },
-    onMutate: async (variables) => {
-      // Optimistic Update: UI 즉시 반영
-      // 진행 중인 관련 쿼리들을 취소하여 충돌 방지
-      await queryClient.cancelQueries({ queryKey: QueryKeyGenerator.allTodos() });
-      await queryClient.cancelQueries({ queryKey: QueryKeyGenerator.todoById({ id: variables.id }) });
-
-      // 현재 캐시된 데이터 저장 (롤백 대비)
-      const previousTodos = queryClient.getQueryData<Todo[]>(QueryKeyGenerator.allTodos());
-      const previousTodo = queryClient.getQueryData<Todo>(QueryKeyGenerator.todoById({ id: variables.id }));
-
-      // 전체 할 일 목록 캐시를 낙관적으로 업데이트
-      queryClient.setQueryData<Todo[]>(QueryKeyGenerator.allTodos(), (oldTodos) => {
-        if (!oldTodos) return [];
-        return oldTodos.map(todo =>
-          todo.id === variables.id ? { ...todo, status: variables.status } : todo
-        );
-      });
-      // 개별 할 일 캐시도 낙관적으로 업데이트
-      if (previousTodo) {
-        queryClient.setQueryData<Todo>(QueryKeyGenerator.todoById({ id: variables.id }), 
-          { ...previousTodo, status: variables.status }
-        );
-      }
-      return { previousTodos, previousTodo }; // 컨텍스트에 이전 데이터 반환
-    },
-    onError: (err, variables, context) => {
-      // 오류 발생 시 Optimistic Update 롤백
-      if (context?.previousTodos) {
-        queryClient.setQueryData<Todo[]>(QueryKeyGenerator.allTodos(), context.previousTodos);
-      }
-      if (context?.previousTodo) {
-        queryClient.setQueryData<Todo>(QueryKeyGenerator.todoById({ id: variables.id }), context.previousTodo);
-      }
-      console.error("Error updating todo status:", err);
-    },
-    onSettled: (data, error, variables) => {
-      // 성공/실패 여부와 관계없이 항상 관련 쿼리 무효화 (서버 데이터와 동기화)
-      queryClient.invalidateQueries({ queryKey: QueryKeyGenerator.allTodos() });
-      queryClient.invalidateQueries({ queryKey: QueryKeyGenerator.todoById({ id: variables.id }) });
     },
   });
 };
@@ -258,26 +122,3 @@ export const useUpdateTodo = () => {
     }
   });
 };
-
-/**
- * 할 일(Todo)을 삭제하는 React Query 뮤테이션 훅입니다.
- *
- * @returns `useMutation` 훅의 결과 객체.
- * @see deleteTodo API 함수를 사용합니다.
- * @see 성공 시 `QueryKeyGenerator.allTodos()` 쿼리를 무효화하여 목록을 새로고침합니다.
- */
-export const useDeleteTodo = () => {
-  const queryClient = useQueryClient();
-  return useMutation<void, Error, { id: string }>({
-    mutationFn: ({ id }) => deleteTodo({ id }),
-    onSuccess: () => {
-      // 할 일 삭제 성공 시, 전체 할 일 목록 캐시를 무효화
-      queryClient.invalidateQueries({ queryKey: QueryKeyGenerator.allTodos() });
-      // 삭제된 ID에 대한 개별 캐시는 자동으로 처리될 수 있지만, 명시적으로 제거하거나 무효화할 수도 있음.
-      // queryClient.removeQueries({ queryKey: QueryKeyGenerator.todoById({ id: VARIABLES.id }) }); // 예시
-    },
-    onError: (err) => {
-      console.error("Error deleting todo:", err);
-    }
-  });
-}; 

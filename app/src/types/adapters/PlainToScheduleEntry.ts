@@ -9,5 +9,7 @@ export const plainToScheduleEntry = (plain: any): ScheduleEntry => {
     completed: plain.completed,
     startAt: plain.startAt,
     endAt: plain.endAt,
+    createdAt: plain.createdAt,
+    updatedAt: plain.updatedAt,
   }
 }

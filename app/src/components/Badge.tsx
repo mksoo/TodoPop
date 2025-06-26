@@ -28,6 +28,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginTop: 4,
     backgroundColor: colors.grayscale[200],
+    textAlign: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   badgeText: {
     color: colors.grayscale[700],

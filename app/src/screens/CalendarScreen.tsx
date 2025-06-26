@@ -1,21 +1,22 @@
-import ScreenHeader from '@/components/ScreenHeader';
-import { useAuth } from '@/contexts/AuthContext';
 import { colors } from '@/styles';
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, FC } from 'react';
 import { View, StyleSheet, SafeAreaView, Text, FlatList, TouchableOpacity } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import dayjs from 'dayjs';
-import TodoItem from '@/components/TodoItem';
+import ScheduleEntryItem from '@/components/ScheduleEntryItem';
 import { useScheduleEntriesQuery } from '@/hooks/useScheduleEntryQueries';
+import SvgIcon from '@/components/common/SvgIcon';
+import { MainStackScreenProps } from '@/navigation/navigation';
 
-const CalendarScreen = () => {
+type Props = MainStackScreenProps<"Calendar">;
+
+const CalendarScreen: FC<Props> = ({ navigation }) => {
+
   const today = useMemo(() => dayjs().format('YYYY-MM-DD'), []);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedMonth, setSelectedMonth] = useState(dayjs().month() + 1);
   const [selectedYear, setSelectedYear] = useState(dayjs().year());
   
-
-  const { currentUser } = useAuth();
   const { data: scheduleEntries } = useScheduleEntriesQuery();
 
   const markedDates = useMemo(() => {
@@ -105,12 +106,17 @@ const CalendarScreen = () => {
       </View>
       {selectedDate ? (
         <View style={styles.todoListContainer}>
-          <Text style={styles.selectedDateText}>{selectedDate}의 할 일</Text>
+          <Text style={styles.selectedDateText}>
+            {selectedDate}, {dayjs(selectedDate).format('dddd')}
+            <Text style={styles.selectedDateLunarText}>
+              {' '}음력 {dayjs(selectedDate).lunar("YYYY년 MM월 DD일")}
+            </Text>
+          </Text>
           {todosForSelectedDate.length > 0 ? (
             <FlatList
               data={todosForSelectedDate}
               keyExtractor={item => item.id}
-              renderItem={({ item }) => <TodoItem item={item} />}
+              renderItem={({ item }) => <ScheduleEntryItem item={item} />}
               contentContainerStyle={styles.listContentContainer}
             />
           ) : (
@@ -118,6 +124,9 @@ const CalendarScreen = () => {
           )}
         </View>
       ) : null}
+      <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('ScheduleEntryAdd')}>
+        <SvgIcon name="add" color={colors.primary} style={styles.addButtonIcon} />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 };
@@ -128,7 +137,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.grayscale[100],
   },
   calendarWrapper: {
-    flex: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.grayscale[200],
   },
   calendar: {
     width: '100%',
@@ -141,9 +151,12 @@ const styles = StyleSheet.create({
   },
   selectedDateText: {
     fontSize: 18,
-    fontWeight: 'bold',
     color: colors.primary,
     marginBottom: 8,
+  },
+  selectedDateLunarText: {
+    fontSize: 12,
+    color: colors.text.secondary,
   },
   listContentContainer: {
     paddingBottom: 16,
@@ -172,6 +185,30 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: 'bold',
   },
+  addButton: {
+    position: 'absolute',
+    bottom: 30,
+    left: '50%',
+    transform: [{ translateX: -16 }],
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.background.primary,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    elevation: 4,
+    shadowColor: colors.grayscale[900],
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  addButtonIcon: {
+    width: 24,
+    height: 24,
+    tintColor: colors.primary,
+  }
 });
 
 export default CalendarScreen; 
