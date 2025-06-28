@@ -4,7 +4,7 @@ import TodoListScreen from '../screens/TodoListScreen'; // 경로 수정
 import TodoEditScreen from '../screens/TodoEditScreen'; // TodoEditScreen import
 import LoginScreen from '../screens/LoginScreen'; // LoginScreen import
 import { ActivityIndicator, View, StyleSheet } from 'react-native'; // 로딩 인디케이터
-import { useAuth } from '../contexts/AuthContext'; // AuthContext로부터 인증 상태를 가져오기 위한 훅
+import useAuthStore from '../stores/authStore'; // AuthContext로부터 인증 상태를 가져오기 위한 훅
 import { colors } from '@/styles';
 import CalendarScreen from '@/screens/CalendarScreen';
 import { AuthStackParamList, MainStackParamList } from './navigation';
@@ -21,7 +21,7 @@ const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 // AuthContext로부터 직접 인증 상태를 가져옵니다.
 const AppNavigator: React.FC = () => {
   // useAuth 훅을 호출하여 현재 인증 상태(currentUser)와 로딩 상태(isLoading)를 가져옵니다.
-  const { currentUser, isLoading } = useAuth();
+  const { currentUser, isLoading } = useAuthStore();
 
   // 인증 상태를 확인하는 동안 (isLoading이 true일 때) 로딩 인디케이터를 표시합니다.
   if (isLoading) {
@@ -50,11 +50,6 @@ const AppNavigator: React.FC = () => {
         name="ScheduleEntryEdit"
         component={ScheduleEntryEditScreen}
         options={{ headerShown: false }}
-      />
-      <MainStack.Screen 
-        name="TodoList" 
-        component={TodoListScreen} 
-        options={{ title: '나의 할 일' }}
       />
     </MainStack.Navigator>
   ) : (
