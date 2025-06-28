@@ -4,17 +4,17 @@ import { ScheduleEntry } from "@/types/scheduleEntry.types";
 import { collection, getDoc, getDocs, query, doc, updateDoc, deleteDoc, addDoc, serverTimestamp } from "@react-native-firebase/firestore";
 import auth from "@react-native-firebase/auth";
 
-const scheduleEntryCollection = (() => {
+const getScheduleEntryCollection = () => {
   const currentUser = auth().currentUser;
   if (!currentUser) {
     throw new Error('User is not authenticated');
   }
   return collection(db, 'Users', currentUser.uid, 'ScheduleEntries');
-})();
+};
 
 export const getScheduleEntries = async (): Promise<ScheduleEntry[]> => {
   try {
-    let q = query(scheduleEntryCollection);
+    let q = query(getScheduleEntryCollection());
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => (plainToScheduleEntry({ id: doc.id, ...doc.data() })));
   } catch (error) {
@@ -26,7 +26,7 @@ export const getScheduleEntries = async (): Promise<ScheduleEntry[]> => {
 export const getScheduleEntryById = async (args: { id: string }): Promise<ScheduleEntry> => {
   const { id } = args;
   try {
-    const docRef = doc(scheduleEntryCollection, id);
+    const docRef = doc(getScheduleEntryCollection(), id);
     const snapshot = await getDoc(docRef);
     return plainToScheduleEntry({ id: snapshot.id, ...snapshot.data() });
   } catch (error) {
@@ -38,7 +38,7 @@ export const getScheduleEntryById = async (args: { id: string }): Promise<Schedu
 export const addScheduleEntry = async (args: { data: Omit<ScheduleEntry, 'id' | 'completed'> }): Promise<string> => {
   const { data } = args;
   try {
-    const docRef = await addDoc(scheduleEntryCollection, {
+    const docRef = await addDoc(getScheduleEntryCollection(), {
       ...data,
       completed: false,
       createdAt: serverTimestamp(),
@@ -55,7 +55,7 @@ export const addScheduleEntry = async (args: { data: Omit<ScheduleEntry, 'id' | 
 export const updateScheduleEntry = async (args: { id: string, data: Partial<ScheduleEntry> }): Promise<void> => {
   const { id, data } = args;
   try {
-    const docRef = doc(scheduleEntryCollection, id);
+    const docRef = doc(getScheduleEntryCollection(), id);
     await updateDoc(docRef, data);
   } catch (error) {
     console.error("Error updating document in scheduleEntryApi: ", error);
@@ -66,7 +66,7 @@ export const updateScheduleEntry = async (args: { id: string, data: Partial<Sche
 export const deleteScheduleEntry = async (args: { id: string }): Promise<void> => {
   const { id } = args;
   try {
-    const docRef = doc(scheduleEntryCollection, id);
+    const docRef = doc(getScheduleEntryCollection(), id);
     await deleteDoc(docRef);
   } catch (error) {
     console.error("Error deleting document in scheduleEntryApi: ", error);
