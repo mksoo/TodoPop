@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Alert, Platform, Text } from 'react-native';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
-import auth from '@react-native-firebase/auth';
+import { getAuth, GoogleAuthProvider } from '@react-native-firebase/auth';
 import { useCheckAndCreateUser } from '../hooks/useuserMutations';
 import { colors } from '../styles';
 
@@ -23,8 +23,8 @@ const LoginScreen = () => {
         return;
       }
 
-      const googleCredential = auth.GoogleAuthProvider.credential(userInfo.data.idToken);
-      const firebaseUserCredential = await auth().signInWithCredential(googleCredential);
+      const googleCredential = GoogleAuthProvider.credential(userInfo.data.idToken);
+      const firebaseUserCredential = await getAuth().signInWithCredential(googleCredential);
       const user = firebaseUserCredential.user;
 
       if (user) {

@@ -2,10 +2,10 @@ import { db } from "@/lib/firebase";
 import { plainToScheduleEntry } from "@/types/adapters/PlainToScheduleEntry";
 import { ScheduleEntry } from "@/types/scheduleEntry.types";
 import { collection, getDoc, getDocs, query, doc, updateDoc, deleteDoc, addDoc, serverTimestamp } from "@react-native-firebase/firestore";
-import auth from "@react-native-firebase/auth";
+import { getAuth} from "@react-native-firebase/auth";
 
 const getScheduleEntryCollection = () => {
-  const currentUser = auth().currentUser;
+  const currentUser = getAuth().currentUser;
   if (!currentUser) {
     throw new Error('User is not authenticated');
   }

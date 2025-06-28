@@ -1,5 +1,5 @@
 import React, { useEffect, ReactNode } from 'react';
-import auth from '@react-native-firebase/auth';
+import { getAuth } from '@react-native-firebase/auth';
 import useAuthStore from '@/stores/authStore';
 import { listenUser } from '@/api/userApi';
 
@@ -14,7 +14,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     setIsLoading(true);
     let unSubscribeUser: (() => void) | undefined;
-    const unsubscribe = auth().onAuthStateChanged(user => {
+    const unsubscribe = getAuth().onAuthStateChanged(user => {
       if (!user) {
         setCurrentUser(null);
         setIsLoading(false);
