@@ -36,19 +36,11 @@ const queryClient = new QueryClient();
 
 // 앱의 메인 컴포넌트
 function App(): React.JSX.Element {
-  // currentUser, isLoading 상태 및 Firebase auth 리스너 로직은 AuthProvider 내부로 이동되었습니다.
 
   return (
-    // React Query Provider: 앱 전체에서 React Query 기능을 사용할 수 있도록 설정합니다.
     <QueryClientProvider client={queryClient}>
-      {/* AuthProvider: 앱 전체에 인증 관련 상태(currentUser, isLoading)를 제공합니다. */}
-      {/* AuthProvider로 감싸진 모든 하위 컴포넌트들은 useAuth 훅을 통해 이 상태 값들에 접근할 수 있습니다. */}
       <AuthProvider>
-        {/* NavigationContainer: React Navigation의 네비게이션 기능을 사용하기 위한 최상위 컨테이너입니다. */}
         <NavigationContainer>
-          {/* AppNavigator: 앱의 전체 네비게이션 로직을 담당합니다. */}
-          {/* AuthProvider 내부로 이동하면서 더 이상 currentUser, isLoading props를 직접 받지 않고, */}
-          {/* AppNavigator 내부에서 useAuth 훅을 사용하여 인증 상태를 가져옵니다. */}
           <AppNavigator />
         </NavigationContainer>
       </AuthProvider>
