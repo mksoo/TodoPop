@@ -10,6 +10,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import AppNavigator from './src/navigation/AppNavigator';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import Config from 'react-native-config';
 // Firebase auth 관련 로직은 AuthProvider로 이동했습니다.
 import { AuthProvider } from './src/contexts/AuthContext'; // AuthProvider import
 import dayjs from 'dayjs';
@@ -28,7 +29,7 @@ dayjs.locale(ko);
 // Google Sign-In 초기 설정
 // webClientId는 Google Cloud Console에서 가져온 웹 클라이언트 ID입니다.
 GoogleSignin.configure({
-  webClientId: '245277363399-m9h3a896ifqqfnortvcc68nd779bq3oj.apps.googleusercontent.com',
+  webClientId: Config.FIREBASE_WEB_CLIENT,
 });
 
 // React Query 클라이언트 인스턴스 생성
