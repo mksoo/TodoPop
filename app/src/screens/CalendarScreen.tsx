@@ -71,6 +71,7 @@ const CalendarScreen: FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.calendarWrapper}>
         <Calendar
+          key={`${selectedYear}-${selectedMonth}`}
           style={styles.calendar}
           current={`${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`}
           onMonthChange={month => {
@@ -96,13 +97,6 @@ const CalendarScreen: FC<Props> = ({ navigation }) => {
             },
           }}
         />
-        {(selectedMonth !== dayjs().month() + 1 || selectedYear !== dayjs().year()) && (
-          <View style={styles.todayButtonWrapper}>
-            <TouchableOpacity style={styles.todayButton} onPress={handleGoToToday}>
-              <Text style={styles.todayButtonText}>오늘</Text>
-            </TouchableOpacity>
-          </View>
-        )}
       </View>
       {selectedDate ? (
         <View style={styles.todoListContainer}>
@@ -124,9 +118,16 @@ const CalendarScreen: FC<Props> = ({ navigation }) => {
           )}
         </View>
       ) : null}
+      <View style={styles.buttonWrapper}>
+      {(selectedMonth !== dayjs().month() + 1 || selectedYear !== dayjs().year()) && (
+            <TouchableOpacity style={styles.todayButton} onPress={handleGoToToday}>
+              <Text style={styles.todayButtonText}>오늘</Text>
+            </TouchableOpacity>
+        )}
       <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('ScheduleEntryAdd')}>
         <SvgIcon name="add" color={colors.primary} style={styles.addButtonIcon} />
       </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -167,9 +168,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 24,
   },
-  todayButtonWrapper: {
+  buttonWrapper: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
     alignItems: 'center',
-    marginTop: 12,
+    flexDirection: 'column',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    gap: 16,
   },
   todayButton: {
     backgroundColor: colors.background.primary,
@@ -178,18 +186,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 10,
     borderRadius: 20,
-    position: 'absolute',
-    bottom: 30,
   },
   todayButtonText: {
     color: colors.primary,
     fontWeight: 'bold',
   },
   addButton: {
-    position: 'absolute',
-    bottom: 30,
-    left: '50%',
-    transform: [{ translateX: -16 }],
     width: 32,
     height: 32,
     alignItems: 'center',
