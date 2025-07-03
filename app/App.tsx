@@ -13,6 +13,7 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'; // isSameOrAfter 플러�
 import ko from 'dayjs/locale/ko';
 import lunar from 'dayjs-lunar';
 import PermissionService from './src/services/PermissionService';
+import notifee, { EventType } from '@notifee/react-native';
 
 dayjs.extend(customParseFormat);
 dayjs.extend(isSameOrBefore);
@@ -34,6 +35,24 @@ function App(): React.JSX.Element {
   useEffect(() => {
     PermissionService.requestNotificationPermission();
   }, [PermissionService]);
+
+  useEffect(() => {
+    const unsubscribe = notifee.onForegroundEvent(({ type, detail }) => {
+      switch (type) {
+        case EventType.DISMISSED:
+          console.log('User dismissed notification', detail.notification);
+          break;
+        case EventType.PRESS:
+          console.log('User pressed notification', detail.notification);
+          break;
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    }
+  }, []);
+
 
   return (
     <QueryClientProvider client={queryClient}>
