@@ -35,7 +35,7 @@ export const getScheduleEntryById = async (args: { id: string }): Promise<Schedu
   }
 }
 
-export const addScheduleEntry = async (args: { data: Omit<ScheduleEntry, 'id' | 'completed'> }): Promise<string> => {
+export const addScheduleEntry = async (args: { data: Omit<ScheduleEntry, 'id' | 'completed' | 'createdAt'> }): Promise<string> => {
   const { data } = args;
   try {
     const docRef = await addDoc(getScheduleEntryCollection(), {
