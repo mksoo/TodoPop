@@ -12,8 +12,9 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'; // isSameOrAfter 플러그인 import
 import ko from 'dayjs/locale/ko';
 import lunar from 'dayjs-lunar';
-import PermissionService from './src/services/PermissionService';
 import notifee, { EventType } from '@notifee/react-native';
+
+import PermissionService from './src/services/PermissionService';
 
 dayjs.extend(customParseFormat);
 dayjs.extend(isSameOrBefore);
@@ -33,7 +34,8 @@ const queryClient = new QueryClient();
 // 앱의 메인 컴포넌트
 function App(): React.JSX.Element {
   useEffect(() => {
-    PermissionService.requestNotificationPermission();
+    const requestNotificationPermission = async () => PermissionService.requestNotificationPermission();
+    requestNotificationPermission();
   }, [PermissionService]);
 
   useEffect(() => {
