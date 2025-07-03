@@ -7,7 +7,7 @@ import { useAddScheduleEntry } from '@/hooks/useScheduleEntryMutations';
 import ScreenHeader from '@/components/ScreenHeader';
 import SvgIcon from '@/components/common/SvgIcon';
 import { useForm } from 'react-hook-form';
-import firestore from '@react-native-firebase/firestore';
+import { Timestamp } from '@react-native-firebase/firestore';
 import { ScheduleEntryFormSection, FormValues, useScheduleEntryFormSection } from '../components/ScheduleEntryFormSection';
 
 const ScheduleEntryAddScreen: FC<MainStackScreenProps<'ScheduleEntryAdd'>> = ({ navigation }) => {
@@ -39,8 +39,8 @@ const ScheduleEntryAddScreen: FC<MainStackScreenProps<'ScheduleEntryAdd'>> = ({ 
       data: {
         title: data.title,
         type: "EVENT",
-        startAt: data.startAt ? firestore.Timestamp.fromDate(data.startAt) : firestore.Timestamp.fromDate(dayjs().toDate()),
-        endAt: data.endAt ? firestore.Timestamp.fromDate(data.endAt) : firestore.Timestamp.fromDate(dayjs().add(1, 'hour').toDate()),
+        startAt: data.startAt ? Timestamp.fromDate(data.startAt) : Timestamp.fromDate(dayjs().toDate()),
+        endAt: data.endAt ? Timestamp.fromDate(data.endAt) : Timestamp.fromDate(dayjs().add(1, 'hour').toDate()),
         description: data.description,
       }
     }, {

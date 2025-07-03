@@ -83,7 +83,6 @@ const ScheduleEntryEditScreen: FC<MainStackScreenProps<'ScheduleEntryEdit'>> = (
         form.reset();
       }
     });
-    navigation.goBack();
   }, [updateScheduleEntry, navigation, form, entry, deleteScheduleEntry]);
 
   return (
