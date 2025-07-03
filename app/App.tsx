@@ -1,11 +1,4 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import AppNavigator from './src/navigation/AppNavigator';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -19,6 +12,7 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'; // isSameOrAfter 플러그인 import
 import ko from 'dayjs/locale/ko';
 import lunar from 'dayjs-lunar';
+import PermissionService from './src/services/PermissionService';
 
 dayjs.extend(customParseFormat);
 dayjs.extend(isSameOrBefore);
@@ -37,6 +31,9 @@ const queryClient = new QueryClient();
 
 // 앱의 메인 컴포넌트
 function App(): React.JSX.Element {
+  useEffect(() => {
+    PermissionService.requestNotificationPermission();
+  }, [PermissionService]);
 
   return (
     <QueryClientProvider client={queryClient}>
