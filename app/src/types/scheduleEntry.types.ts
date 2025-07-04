@@ -10,4 +10,5 @@ export interface ScheduleEntry {
   endAt?: Timestamp;
   createdAt: Timestamp;
   updatedAt?: Timestamp;
+  uid: string;
 }
