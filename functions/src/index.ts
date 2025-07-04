@@ -7,7 +7,11 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
+import dayjs from "dayjs";
 import {initializeApp} from "firebase-admin/app";
+import ko from "dayjs/locale/ko";
+
+dayjs.locale(ko);
 
 initializeApp();
 
