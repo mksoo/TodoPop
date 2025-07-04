@@ -16,9 +16,7 @@ class NotificationService {
     return usersService.getRef({id: uid}).collection("Notifications");
   }
 
-  private async addNotifications(
-    args: {receiverId: string; data: Notification}[],
-  ) {
+  async addNotifications(args: {receiverId: string; data: Notification}[]) {
     await Promise.all(
       chunk(args, 500).map(async (chunkedArgs) => {
         const batch = admin.firestore().batch();
