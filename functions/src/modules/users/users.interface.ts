@@ -11,14 +11,14 @@ export interface User {
   } 
 
 export const docToUser = (doc: DocumentSnapshot<DocumentData>): User => {
-    const data = doc.data();
-    return {
-        id: doc.id,
-        uid: data?.uid,
-        displayName: data?.displayName,
-        email: data?.email,
-        photoURL: data?.photoURL,
-        createdAt: data?.createdAt,
-        fcmToken: data?.fcmToken,
-    }
+  const data = doc.data();
+  return {
+    id: doc.id,
+    uid: data?.uid,
+    displayName: data?.displayName,
+    email: data?.email,
+    photoURL: data?.photoURL,
+    createdAt: data?.createdAt,
+    fcmToken: data?.fcmToken,
+  }
 }
