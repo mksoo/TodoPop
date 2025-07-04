@@ -30,7 +30,7 @@ export interface RepeatSettings {
   /** 사용자 정의 반복 시 간격 (예: frequency가 'custom'이고 interval이 2면 2일마다 또는 2주마다 등) */
   interval?: number;
   /** 반복 종료일 (선택 사항) */
-  endDate?: Timestamp
+  endDate?: Timestamp;
   /**
    * 마지막으로 이 반복 할 일이 "완료" 처리된 시각입니다. (선택 사항)
    * 이 값은 다음 할 일 생성 시 참조되며, 새롭게 생성된 반복 할 일에는 이 값이 없습니다.

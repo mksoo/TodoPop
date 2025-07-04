@@ -35,14 +35,16 @@ export const getScheduleEntryById = async (args: { id: string }): Promise<Schedu
   }
 }
 
-export const addScheduleEntry = async (args: { data: Omit<ScheduleEntry, 'id' | 'completed'> }): Promise<string> => {
+export const addScheduleEntry = async (args: { data: Omit<ScheduleEntry, 'id' | 'completed' | 'createdAt' | 'uid'> }): Promise<string> => {
   const { data } = args;
+  const { currentUser } = getAuth();
   try {
     const docRef = await addDoc(getScheduleEntryCollection(), {
       ...data,
       completed: false,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
+      uid: currentUser?.uid ?? '',
     });
     return docRef.id;
   } catch (error) {

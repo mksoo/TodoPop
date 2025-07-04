@@ -11,5 +11,6 @@ export const plainToScheduleEntry = (plain: any): ScheduleEntry => {
     endAt: plain.endAt,
     createdAt: plain.createdAt,
     updatedAt: plain.updatedAt,
+    uid: plain.uid,
   }
 }
