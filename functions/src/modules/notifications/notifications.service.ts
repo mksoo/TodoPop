@@ -111,7 +111,7 @@ class NotificationService {
 
   formatDateWithKoreanDay(args: {date: Date}): string {
     const {date} = args;
-    const dayjsDate = dayjs(date);
+    const dayjsDate = dayjs(date).tz("Asia/Seoul");
     const days = ["일", "월", "화", "수", "목", "금", "토"];
     const dayOfWeek = days[date.getDay()];
 

@@ -10,8 +10,12 @@
 import dayjs from "dayjs";
 import {initializeApp} from "firebase-admin/app";
 import ko from "dayjs/locale/ko";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 
 dayjs.locale(ko);
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 initializeApp();
 
