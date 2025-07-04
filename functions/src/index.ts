@@ -12,3 +12,4 @@ import {initializeApp} from "firebase-admin/app";
 initializeApp();
 
 export * from "./modules/todos/todos.functions";
+export * from "./modules/scheduleEntries/scheduleEntries.functions";
