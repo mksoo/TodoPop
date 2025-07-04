@@ -1,17 +1,18 @@
 import * as admin from "firebase-admin";
 import NotificationService from "../notifications/notifications.service";
 import {docToScheduleEntry} from "./scheduleEntries.interface";
+import dayjs from "dayjs";
 
 class ScheduleEntriesService {
   async sendNotificationsForUpcomingSchedules() {
-    const now = new Date();
-    const nextMinute = new Date(now.getTime() + 60000);
+    const now = dayjs().startOf("minute");
+    const nextMinute = now.add(1, "minute");
 
     const scheduleSnapshot = await admin
       .firestore()
       .collectionGroup("ScheduleEntries")
-      .where("startAt", ">=", now)
-      .where("startAt", "<", nextMinute)
+      .where("startAt", ">=", now.toDate())
+      .where("startAt", "<", nextMinute.toDate())
       .get();
 
     if (scheduleSnapshot.empty) {
