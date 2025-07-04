@@ -1,7 +1,7 @@
 import * as functions from "firebase-functions";
 import usersService from "../users/users.service";
 import notificationsService from "./notifications.service";
-import { docToNotification } from "./notifications.interface";
+import {docToNotification} from "./notifications.interface";
 
 export const NotificationOnCreate = functions
   .region("asia-northeast3")
@@ -28,6 +28,6 @@ export const NotificationOnCreate = functions
         deepLink,
         imageUrl,
         inAppPush,
-      }
-    })
-  })
+      },
+    });
+  });

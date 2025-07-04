@@ -1,14 +1,18 @@
-import { DocumentData, DocumentSnapshot, Timestamp } from "firebase-admin/firestore";
+import {
+  DocumentData,
+  DocumentSnapshot,
+  Timestamp,
+} from "firebase-admin/firestore";
 
 export interface User {
-    id: string;
-    uid: string; // Firebase Authentication UID
-    displayName: string | null;
-    email: string | null;
-    photoURL: string | null;
-    createdAt: Timestamp;
-    fcmToken: string | null;
-  } 
+  id: string;
+  uid: string; // Firebase Authentication UID
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+  createdAt: Timestamp;
+  fcmToken: string | null;
+}
 
 export const docToUser = (doc: DocumentSnapshot<DocumentData>): User => {
   const data = doc.data();
@@ -20,5 +24,5 @@ export const docToUser = (doc: DocumentSnapshot<DocumentData>): User => {
     photoURL: data?.photoURL,
     createdAt: data?.createdAt,
     fcmToken: data?.fcmToken,
-  }
-}
+  };
+};

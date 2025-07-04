@@ -1,5 +1,5 @@
-import * as admin from "firebase-admin"
-import { docToUser } from "./users.interface";
+import * as admin from "firebase-admin";
+import {docToUser} from "./users.interface";
 
 class Users {
   private getCollectionRef() {

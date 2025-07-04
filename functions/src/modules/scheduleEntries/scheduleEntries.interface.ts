@@ -1,17 +1,17 @@
-import { DocumentSnapshot, Timestamp } from "firebase-admin/firestore";
+import {DocumentSnapshot, Timestamp} from "firebase-admin/firestore";
 
 export interface ScheduleEntry {
-    id: string;
-    type: "EVENT" | "TASK" | "HABIT";
-    title: string;
-    description?: string;
-    completed: boolean;
-    startAt?: Timestamp;
-    endAt?: Timestamp;
-    createdAt: Timestamp;
-    updatedAt?: Timestamp;
-    uid: string;
-  }
+  id: string;
+  type: "EVENT" | "TASK" | "HABIT";
+  title: string;
+  description?: string;
+  completed: boolean;
+  startAt?: Timestamp;
+  endAt?: Timestamp;
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
+  uid: string;
+}
 
 export const docToScheduleEntry = (doc: DocumentSnapshot) => {
   const data = doc.data();
@@ -26,5 +26,5 @@ export const docToScheduleEntry = (doc: DocumentSnapshot) => {
     createdAt: data?.createdAt,
     updatedAt: data?.updatedAt,
     uid: data?.uid,
-  }
-}
+  };
+};

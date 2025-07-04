@@ -9,6 +9,6 @@ const chunk = <T>(array: T[], size: number): T[][] => {
   }
 
   return result;
-}
+};
 
 export default chunk;

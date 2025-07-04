@@ -1,6 +1,6 @@
 import * as admin from "firebase-admin";
 import NotificationService from "../notifications/notifications.service";
-import { docToScheduleEntry } from "./scheduleEntries.interface";
+import {docToScheduleEntry} from "./scheduleEntries.interface";
 
 class ScheduleEntriesService {
   async sendNotificationsForUpcomingSchedules() {
@@ -24,7 +24,7 @@ class ScheduleEntriesService {
       await NotificationService.notifySchedule({
         scheduleEntry: {
           ...scheduleEntry,
-          uid: doc.ref.parent.parent?.id ?? '', // Assuming uid is the parent's parent ID
+          uid: doc.ref.parent.parent?.id ?? "", // Assuming uid is the parent's parent ID
         },
       });
     }

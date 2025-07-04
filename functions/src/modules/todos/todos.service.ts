@@ -26,9 +26,7 @@ class TodosService {
    * @param {{id: string}} args
    * @return {admin.firestore.DocumentReference} Todo의 Firestore 참조
    */
-  getRef(args: {
-    id: string;
-  }): admin.firestore.DocumentReference {
+  getRef(args: {id: string}): admin.firestore.DocumentReference {
     return this.getCollectionRef().doc(args.id);
   }
 
@@ -54,8 +52,8 @@ class TodosService {
    * @return {Promise<admin.firestore.DocumentSnapshot[]>} 마감일이 지난 Todo
    */
   async getOverdueTodosByCursor(args: {
-    limit: number,
-    lastDoc: admin.firestore.DocumentSnapshot | null,
+    limit: number;
+    lastDoc: admin.firestore.DocumentSnapshot | null;
   }): Promise<admin.firestore.DocumentSnapshot[]> {
     const {limit, lastDoc} = args;
     const now = dayjs().toDate();
