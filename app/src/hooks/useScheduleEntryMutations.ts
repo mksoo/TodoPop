@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 export const useAddScheduleEntry = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (args: { data: Omit<ScheduleEntry, 'id' | 'completed' | 'createdAt'> }): Promise<string> => {
+    mutationFn: async (args: { data: Omit<ScheduleEntry, 'id' | 'completed' | 'createdAt' | 'uid'> }): Promise<string> => {
       const { data } = args;
       return await addScheduleEntry({ data });
     },
