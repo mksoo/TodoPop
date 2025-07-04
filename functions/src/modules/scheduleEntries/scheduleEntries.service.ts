@@ -9,7 +9,7 @@ class ScheduleEntriesService {
 
     const scheduleSnapshot = await admin
       .firestore()
-      .collectionGroup("entrySchedule")
+      .collectionGroup("ScheduleEntries")
       .where("startAt", ">=", now)
       .where("startAt", "<", nextMinute)
       .get();
